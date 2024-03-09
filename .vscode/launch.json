@@ -8,7 +8,7 @@
             "name": "Launch via NPM",
             "type": "node",
             "request": "launch",
-            "cwd": "${workspaceRoot}",
+            "cwd": "/workspaces/grippaweb-password-keeper",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run-script", "dev"

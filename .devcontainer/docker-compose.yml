@@ -1,0 +1,26 @@
+version: '3.3'
+
+services:
+  grpdevgpk:
+    container_name: grpdevgpk
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+
+  grpdevgpk_db:
+    image: mysql:5.7.42
+    container_name: grpdevgpk_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 42015cd7e0bb1aa0caa339449520f16982c70df6f46c0fd8a1be2153b38de8ba
+      MYSQL_DATABASE: grippaweb_ps
+      MYSQL_USER: grpps
+      MYSQL_PASSWORD: b18fcbf29e71f57761b622966184a4a487dd2ee19168e2606025f1c66a64cb65
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    volumes:
+      -   grpdevgpkdata:/var/lib/mysql:rw
+    ports:
+      - 3307:3306
+volumes:
+  grpdevgpkdata: {}

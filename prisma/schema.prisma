@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,52 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model categories {
+  id          Int         @id @default(autoincrement())
+  name        String?     @db.VarChar(255)
+  code        String?     @db.VarChar(50)
+  description String?     @db.VarChar(500)
+  icon        String?     @db.VarChar(500)
+  uuid        Int?
+  commons     Boolean     @default(false)
+  users_keys  users_keys? @relation(fields: [uuid], references: [id], onDelete: Cascade, map: "fk_categories_users")
+  secreats    secreats[]
+
+  @@index([uuid], map: "fk_categories_users")
+}
+
+model fields {
+  id           Int        @default(autoincrement())
+  uuid         Int
+  name         String?    @db.VarChar(500)
+  defaultvalue String?    @db.VarChar(500)
+  common       Boolean    @default(false)
+  users_keys   users_keys @relation(fields: [uuid], references: [id], onDelete: Cascade, map: "fk_users_fields")
+
+  @@id([id, uuid])
+  @@index([uuid], map: "fk_users_fields")
+}
+
+model secreats {
+  id         Int         @id @default(autoincrement())
+  uuid       Int?
+  category   Int?
+  name       String?     @db.VarChar(500)
+  content    String?     @db.Text
+  categories categories? @relation(fields: [category], references: [id], onDelete: Cascade, map: "fk_categories_secreats")
+  users_keys users_keys? @relation(fields: [uuid], references: [id], onDelete: Cascade, map: "fk_users_key_secreats")
+
+  @@index([category], map: "fk_categories_secreats")
+  @@index([uuid], map: "fk_users_key_secreats")
+}
+
+model users_keys {
+  id         Int          @id @default(autoincrement())
+  key        String       @db.VarChar(500)
+  uuid       String?      @db.VarChar(500)
+  categories categories[]
+  fields     fields[]
+  secreats   secreats[]
 }
