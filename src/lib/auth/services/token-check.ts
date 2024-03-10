@@ -32,7 +32,7 @@ export async function getTokenFromCookie( req: NextRequest) {
 
     try {
         const keyCookie = CryptoJS.SHA256((process.env.AUTH_SECRET as string)).toString();
-        const cookie = req.cookies.get(process.env.SESSION_COOKIE_NAME);
+        const cookie = req.cookies?.get(process.env.SESSION_COOKIE_NAME);
 
         
         if(!!cookie){

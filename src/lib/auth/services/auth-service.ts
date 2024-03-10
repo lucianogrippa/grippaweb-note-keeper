@@ -86,6 +86,32 @@ export async function getSessionByToken(_token?: string) {
 
 }
 
+export async function getSessionDataByToken(_token?: string) {
+    try {
+        const resultData = await prismaClient.sessions.findFirst({
+            select: {
+                id:true,
+                data: true,
+                maxAge: true,
+                token: true,
+                lastUpdate: true,
+                creationDate: true,
+            },
+            where: {
+                token: _token
+            },
+        });
+
+        if (!!resultData && !!resultData.data) {
+            resultData.data = JSON.parse(resultData.data);
+            return resultData;
+        }
+    } catch (error) {
+        logger.error(error);
+    }
+
+}
+
 export async function getSessionById(_id?: string) {
     try {
         const resultData = await prismaClient.sessions.findFirst({

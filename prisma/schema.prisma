@@ -54,3 +54,12 @@ model users_keys {
   fields     fields[]
   secreats   secreats[]
 }
+
+model sessions {
+  id           String   @default(uuid())
+  creationDate DateTime @default(now()) @db.Timestamp(0)
+  lastUpdate   DateTime @default(now()) @db.Timestamp(0)
+  maxAge       Int      @default(1200)
+  data         String   @db.Text
+  token        String   @unique(map: "udx_token_name") @default("") @db.VarChar(500)
+}

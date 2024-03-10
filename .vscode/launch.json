@@ -5,14 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch via NPM",
-            "type": "node",
+            "name": "gpk: debug server-side",
+            "type": "node-terminal",
             "request": "launch",
-            "cwd": "/workspaces/grippaweb-password-keeper",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script", "dev"
-            ]
+            "command": "npm run dev"
+        },
+        {
+            "name": "gpk: debug client-side",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3001/gpk/main"
+        },
+        {
+            "name": "gpk: debug full stack",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "serverReadyAction": {
+                "pattern": "- Local:.+(https?://.+/gpk/main)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome"
+            }
         }
     ]
 }

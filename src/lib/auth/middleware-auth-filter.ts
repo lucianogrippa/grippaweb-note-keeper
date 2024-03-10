@@ -12,7 +12,7 @@ async function getSessionByToken(_token?: string, request?: NextRequest) : Promi
 } | null>
 {
   try {
-    const authUrl = new URL('/', request?.url);
+    const authUrl = new URL(`${process.env.NEXT_PUBLIC_DOMAIN}/`);
     // chiama in get /apiAuth per ottenere i dati di sessione
     const apiService = new ApiAuthService(_token,authUrl.toString());
 
@@ -78,12 +78,12 @@ export async function middlewareAuthFilter(request: NextRequest) {
     const dbSession = await checkSession(sessionToken, request);
 
     if (!dbSession) {
-      const loginPath = new URL(process.env.NEXT_PUBLIC_LOGIN_FORM_PATH as string, request.url);
+      const loginPath = new URL(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_LOGIN_FORM_PATH}`);
       return Response.redirect(loginPath);
     }
   } else {
       // cookie non presente
-      const loginPath = new URL(process.env.NEXT_PUBLIC_LOGIN_FORM_PATH as string, request.url);
+      const loginPath = new URL(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_LOGIN_FORM_PATH}`);
       return Response.redirect(loginPath);
   }
 
