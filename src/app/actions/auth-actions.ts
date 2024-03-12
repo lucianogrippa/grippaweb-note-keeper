@@ -71,12 +71,23 @@ export async function signin(prevState: LoginState, formData: FormData): Promise
 }
 
 export async function logout(state: FormData) {
-    const baseUrl = new URL('/', window.location.href);
+    try {
+        const noRedirect = state.get("no-redirect");
 
-    const apiAuth = new ApiAuthService(null, baseUrl.toString());
+        const baseUrl = new URL('/', `${process.env.NEXT_PUBLIC_DOMAIN}`);
 
-    await apiAuth.logout();
+        const apiAuth = new ApiAuthService(null, baseUrl.toString());
 
-    const loginUrl = new URL('/login', window.location.href);
-    redirect(loginUrl.toString());
+        await apiAuth.logout();
+
+        const loginUrl = new URL(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_LOGIN_FORM_PATH}`);
+
+        if(!noRedirect){
+            redirect(loginUrl.toString());
+        }
+    } catch (error) {
+
+    }
+
+    return true;
 }

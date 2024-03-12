@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 import CryptoJS from 'crypto-js';
 import { NextRequest } from 'next/server';
 import { serialize } from 'cookie';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 export async function isValidToken(providedToken: string): Promise<JwtPayload | boolean> {
     try {
@@ -28,6 +29,25 @@ export async function isValidToken(providedToken: string): Promise<JwtPayload | 
     return false;
 }
 
+export async function getTokenFromCookieObjct( cookies: ReadonlyRequestCookies) {
+
+    try {
+        const keyCookie = CryptoJS.SHA256((process.env.AUTH_SECRET as string)).toString();
+        const cookie = cookies?.get(process.env.SESSION_COOKIE_NAME);
+
+        
+        if(!!cookie){
+            return CryptoJS.AES.decrypt(cookie.value as string,keyCookie,{
+                format: CryptoJS.format.OpenSSL
+            }).toString(CryptoJS.enc.Utf8);
+        }
+    } catch (error) {
+        logger.error(error);
+    }
+
+    return null;
+}
+
 export async function getTokenFromCookie( req: NextRequest) {
 
     try {
@@ -46,6 +66,8 @@ export async function getTokenFromCookie( req: NextRequest) {
 
     return null;
 }
+
+
 
 export async function setTokenFromCookie(_token: string) {
 

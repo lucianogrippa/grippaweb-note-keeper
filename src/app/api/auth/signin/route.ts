@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest) {
                         "Set-Cookie": cookieData
                     }
                     // redirect to main page
-                    return NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_MAIN_PAGE_APP}?_t=${token}`, _req.url), {
+                    return NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_MAIN_PAGE_APP}`, _req.url), {
                         headers
                     });
                 }
