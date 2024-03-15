@@ -86,7 +86,7 @@ export async function logout(state: FormData) {
             redirect(loginUrl.toString());
         }
     } catch (error) {
-
+        console.error(error);
     }
 
     return true;

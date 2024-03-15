@@ -16,17 +16,29 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { useRouter } from 'next/navigation';
 import { logout } from '../actions/auth-actions';
+import { Container } from '@mui/material';
 
 interface Props {
-    /**
-     * Injected by the documentation to work in an iframe.
-     * You won't need it on your project.
-     */
     window?: () => Window;
+    mainContainerUI: React.JSX.Element
 }
 
 const drawerWidth = 240;
-const navItems = ['Items', 'Categories', ' ', ' ', 'Logout'];
+const navItems: { name: string, path: string, title?: string }[] = [
+{
+    name: 'Dashboard',
+    path: '/main',
+    title: 'list all secreats'
+},
+{ name: 'Categories', path: '/main/categories',  title: 'list all categories' }, {
+    name: ' ', path: '#'
+}, {
+    name: ' ', path: '#'
+}, {
+    name: 'Logout', path: '/api/auth/logout', title: 'return to login page'
+}];
+
+
 
 export default function MainAppPage(props: Props) {
     const { window } = props;
@@ -37,19 +49,22 @@ export default function MainAppPage(props: Props) {
         setMobileOpen((prevState) => !prevState);
     };
 
-    const onClickMenuItem = async (_item: string) => {
+    const onClickMenuItem = async (_item: { name: string, path: string }) => {
 
-        switch (_item.toUpperCase()) {
-            case "LOGOUT":
+        if (!!_item) {
+            if (_item.name.toUpperCase() === "LOGOUT") {
                 const formData = new FormData();
                 formData.set("no-redirect", "true");
                 await logout(formData);
                 router.push(`${process.env.NEXT_PUBLIC_DOMAIN}${process.env.NEXT_PUBLIC_LOGIN_FORM_PATH}`)
-                break
-            default:
-                break
-        }
+                return;
+            }
 
+            if (_item.path !== '#') {
+                router.push(`${process.env.NEXT_PUBLIC_DOMAIN}${_item.path}`)
+            }
+            return;
+        }
     }
 
     const drawer = (
@@ -59,10 +74,10 @@ export default function MainAppPage(props: Props) {
             </Typography>
             <Divider />
             <List>
-                {navItems.map((item,_index) => (
+                {navItems.map((item, _index) => (
                     <ListItem key={_index} disablePadding>
                         <ListItemButton sx={{ textAlign: 'center' }} onClick={() => onClickMenuItem(item)}>
-                            <ListItemText primary={item} />
+                            <ListItemText primary={item.name} title={item.title} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -94,9 +109,9 @@ export default function MainAppPage(props: Props) {
                         Password Keeper
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                        {navItems.map((item,_index) => (
-                            <Button key={_index} sx={{ color: '#fff' }} onClick={() => onClickMenuItem(item)}>
-                                {item}
+                        {navItems.map((item, _index) => (
+                            <Button key={_index} sx={{ color: '#fff' }} title={item.title} onClick={() => onClickMenuItem(item)}>
+                                {item.name}
                             </Button>
                         ))}
                     </Box>
@@ -121,40 +136,10 @@ export default function MainAppPage(props: Props) {
             </nav>
             <Box component="main" sx={{ p: 3 }}>
                 <Toolbar />
-                <Typography>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Similique unde
-                    fugit veniam eius, perspiciatis sunt? Corporis qui ducimus quibusdam,
-                    aliquam dolore excepturi quae. Distinctio enim at eligendi perferendis in
-                    cum quibusdam sed quae, accusantium et aperiam? Quod itaque exercitationem,
-                    at ab sequi qui modi delectus quia corrupti alias distinctio nostrum.
-                    Minima ex dolor modi inventore sapiente necessitatibus aliquam fuga et. Sed
-                    numquam quibusdam at officia sapiente porro maxime corrupti perspiciatis
-                    asperiores, exercitationem eius nostrum consequuntur iure aliquam itaque,
-                    assumenda et! Quibusdam temporibus beatae doloremque voluptatum doloribus
-                    soluta accusamus porro reprehenderit eos inventore facere, fugit, molestiae
-                    ab officiis illo voluptates recusandae. Vel dolor nobis eius, ratione atque
-                    soluta, aliquam fugit qui iste architecto perspiciatis. Nobis, voluptatem!
-                    Cumque, eligendi unde aliquid minus quis sit debitis obcaecati error,
-                    delectus quo eius exercitationem tempore. Delectus sapiente, provident
-                    corporis dolorum quibusdam aut beatae repellendus est labore quisquam
-                    praesentium repudiandae non vel laboriosam quo ab perferendis velit ipsa
-                    deleniti modi! Ipsam, illo quod. Nesciunt commodi nihil corrupti cum non
-                    fugiat praesentium doloremque architecto laborum aliquid. Quae, maxime
-                    recusandae? Eveniet dolore molestiae dicta blanditiis est expedita eius
-                    debitis cupiditate porro sed aspernatur quidem, repellat nihil quasi
-                    praesentium quia eos, quibusdam provident. Incidunt tempore vel placeat
-                    voluptate iure labore, repellendus beatae quia unde est aliquid dolor
-                    molestias libero. Reiciendis similique exercitationem consequatur, nobis
-                    placeat illo laudantium! Enim perferendis nulla soluta magni error,
-                    provident repellat similique cupiditate ipsam, et tempore cumque quod! Qui,
-                    iure suscipit tempora unde rerum autem saepe nisi vel cupiditate iusto.
-                    Illum, corrupti? Fugiat quidem accusantium nulla. Aliquid inventore commodi
-                    reprehenderit rerum reiciendis! Quidem alias repudiandae eaque eveniet
-                    cumque nihil aliquam in expedita, impedit quas ipsum nesciunt ipsa ullam
-                    consequuntur dignissimos numquam at nisi porro a, quaerat rem repellendus.
-                    Voluptates perspiciatis, in pariatur impedit, nam facilis libero dolorem
-                    dolores sunt inventore perferendis, aut sapiente modi nesciunt.
-                </Typography>
+                <Container >
+                    {props.mainContainerUI}
+                </Container>
+
             </Box>
         </Box>
     );

@@ -10,6 +10,7 @@ import { createPwd } from "./main-actions";
 import MainAppPage from "./MainApp";
 import { cookies } from "next/headers";
 import { getTokenFromCookieObjct } from "@/lib/auth/services/token-check";
+import DashboardUI from "../ui/pages/dashboard";
 
 
 export default async function MainPage() {
@@ -71,5 +72,5 @@ export default async function MainPage() {
 
     
 
-    return <MainAppPage />
+    return <MainAppPage  mainContainerUI={<DashboardUI />} />
 } 
