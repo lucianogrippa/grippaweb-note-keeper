@@ -5,6 +5,28 @@ import CryptoJS from 'crypto-js';
 import { NextRequest } from 'next/server';
 import { serialize } from 'cookie';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
+import { cookies } from 'next/headers';
+import { getSessionDataByToken } from './auth-service';
+
+
+export async function getUUIDFromHeaders() {
+    const cookie = cookies();
+
+    const token = await getTokenFromCookieObjct(cookie);
+
+    if (!!token) {
+        let sessionData = await getSessionDataByToken(token);
+
+        if (!!sessionData && !!sessionData.data) {
+
+            const userData = (sessionData.data as any).userData;
+            const uuid = CryptoJS.SHA256(userData.username).toString();
+            return uuid;
+        }
+    }
+
+    return null;
+}
 
 export async function isValidToken(providedToken: string): Promise<JwtPayload | boolean> {
     try {
@@ -17,7 +39,7 @@ export async function isValidToken(providedToken: string): Promise<JwtPayload | 
             const expired = expDate.getTime() <= Date.now();
 
             const verifyIssuer = !!validate.payload.iss;
-            const audience = !!validate.payload.aud && validate.payload.aud.length>0;
+            const audience = !!validate.payload.aud && validate.payload.aud.length > 0;
 
             if (!!username && !expired && verifyIssuer && audience) {
                 return validate && validate.payload as JwtPayload;
@@ -29,15 +51,15 @@ export async function isValidToken(providedToken: string): Promise<JwtPayload | 
     return false;
 }
 
-export async function getTokenFromCookieObjct( cookies: ReadonlyRequestCookies) {
+export async function getTokenFromCookieObjct(cookies: ReadonlyRequestCookies) {
 
     try {
         const keyCookie = CryptoJS.SHA256((process.env.AUTH_SECRET as string)).toString();
         const cookie = cookies?.get(process.env.SESSION_COOKIE_NAME);
 
-        
-        if(!!cookie){
-            return CryptoJS.AES.decrypt(cookie.value as string,keyCookie,{
+
+        if (!!cookie) {
+            return CryptoJS.AES.decrypt(cookie.value as string, keyCookie, {
                 format: CryptoJS.format.OpenSSL
             }).toString(CryptoJS.enc.Utf8);
         }
@@ -48,15 +70,15 @@ export async function getTokenFromCookieObjct( cookies: ReadonlyRequestCookies) 
     return null;
 }
 
-export async function getTokenFromCookie( req: NextRequest) {
+export async function getTokenFromCookie(req: NextRequest) {
 
     try {
         const keyCookie = CryptoJS.SHA256((process.env.AUTH_SECRET as string)).toString();
         const cookie = req.cookies?.get(process.env.SESSION_COOKIE_NAME);
 
-        
-        if(!!cookie){
-            return CryptoJS.AES.decrypt(cookie.value as string,keyCookie,{
+
+        if (!!cookie) {
+            return CryptoJS.AES.decrypt(cookie.value as string, keyCookie, {
                 format: CryptoJS.format.OpenSSL
             }).toString(CryptoJS.enc.Utf8);
         }
@@ -73,13 +95,13 @@ export async function setTokenFromCookie(_token: string) {
 
     try {
         const keyCookie = CryptoJS.SHA256((process.env.AUTH_SECRET as string)).toString();
-        const encData =  CryptoJS.AES.encrypt(_token as string,keyCookie,{
+        const encData = CryptoJS.AES.encrypt(_token as string, keyCookie, {
             format: CryptoJS.format.OpenSSL
         });
 
-        return serialize(process.env.SESSION_COOKIE_NAME as string,encData.toString(),{
+        return serialize(process.env.SESSION_COOKIE_NAME as string, encData.toString(), {
             httpOnly: true,
-            maxAge:  Number(process.env.SESSION_MAX_AGE)*1000, // One week
+            maxAge: Number(process.env.SESSION_MAX_AGE) * 1000, // One week
             path: '/',
             secure: process.env.NODE_ENV === "production"
         });

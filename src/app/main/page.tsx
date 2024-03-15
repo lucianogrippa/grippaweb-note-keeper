@@ -23,9 +23,10 @@ export default async function MainPage() {
 
     // verifica se necessario effettuare la creazione delle credenziali
     const token = sessionFromCookie;
-
+    let sessionData;
+    
     if (!!token) {
-        const sessionData = await getSessionDataByToken(token);
+        sessionData = await getSessionDataByToken(token);
 
         if (!!sessionData && !!sessionData.data) {
             // ottieni le chiavi
