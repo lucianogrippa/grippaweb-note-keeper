@@ -134,11 +134,9 @@ export default function MainAppPage(props: Props) {
                     {drawer}
                 </Drawer>
             </nav>
-            <Box component="main" sx={{ p: 3 }}>
+            <Box component="main" sx={{ p: 3 , width: "100% !important"}}>
                 <Toolbar />
-                <Container >
                     {props.mainContainerUI}
-                </Container>
 
             </Box>
         </Box>

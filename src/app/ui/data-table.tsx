@@ -1,3 +1,4 @@
+"use client"
 import { Paper, Table, TableHead, TableRow, TableCell, TableBody, TablePagination, Typography, Box } from "@mui/material";
 import React from "react";
 
@@ -54,7 +55,7 @@ export default function DataTable({ columns, rows, totalRows, maxRowsPerPage, on
                                 <TableCell
                                     key={column.id || _idx}
                                     align={column.align}
-                                    style={{ top: 57, minWidth: column.minWidth, maxWidth: column.maxWidth }}
+                                    style={{ minWidth: column.minWidth, maxWidth: column.maxWidth }}
                                 >
                                     {column.label}
                                 </TableCell>
