@@ -1,10 +1,34 @@
 import CategoriesDto from "../models/categories";
 import { PagedResults } from "../models/paged-results";
 
-export default class CategoryService {
+export default class CategoryRepository {
+   
 
     constructor(private uuid: string) { }
 
+    async findById(_id: number): Promise<CategoriesDto> {
+      try {
+        const category = await prisma.categories.findFirst({
+            select: {
+                id: true,
+                name: true,
+                code: true,
+                description: true,
+                icon: true,
+                commons: true
+            },
+            where: {
+                id: _id
+            }
+        });
+
+        return category;
+      } catch (error) {
+        console.error(error);
+      }
+
+      return null;
+    }
     async loadAllCategories(search: string = '', pageIndex: number = 1, maxRowsPerPage: number = 100): Promise<PagedResults<CategoriesDto>> {
 
         const startIndex = Math.ceil((pageIndex - 1) * maxRowsPerPage);

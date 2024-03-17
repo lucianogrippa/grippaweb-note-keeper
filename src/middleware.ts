@@ -18,12 +18,12 @@ export async function middleware(request: NextRequest) {
 
 /*
 * Match all request paths except for the ones starting with:
-* - api (API routes)
+* - api/auth (API routes)
 * - _next/static (static files)
 * - _next/image (image optimization files)
 * - favicon.ico (favicon file)
 */
 export const config = {
     // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
-    matcher: ['/((?!api|locales|_next\/static|_next\/image|.*\\.ico|.*\\.jpg|.*\\.png$).*)'],
+    matcher: ['/((?!app\/login|api\/auth|api\/auth\/.*|locales|_next\/static|_next\/image|.*\\.ico|.*\\.jpg|.*\\.png$).*)'],
 };

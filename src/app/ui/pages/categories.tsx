@@ -1,18 +1,21 @@
 "use client"
 import CategoriesDto from "@/lib/models/categories";
-import React, { useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import DataTable, { ColumnType } from "../data-table";
-import { Button, ButtonGroup, FormControlLabel, FormGroup, Icon, InputBase, Paper, Switch, alpha, styled } from "@mui/material";
+import { Button, ButtonGroup, FormControlLabel, FormGroup, InputBase, Paper, Switch, alpha, debounce, styled } from "@mui/material";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import SearchIcon from '@mui/icons-material/Search';
 import EditAddCategoryDialog from "../dialogs/add-category-dialog";
+import { Waiting } from "../waiting";
+import CategoryService from "@/lib/services/category-service";
 
-export type CategoryUiType = {
-    categories: CategoriesDto[],
-    totalCategories: number,
-    page: number
-    maxRowsPerPage: number
+export type CategoryUiState = {
+    categories?: CategoriesDto[],
+    totalCategories?: number,
+    page?: number
+    maxRowsPerPage?: number
 }
+
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -57,11 +60,52 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
 }));
 
-export default function CategoriesUI(props: CategoryUiType) {
+export default function CategoriesUI() {
 
-    const [showAddEditCayegory , setShowAddEditCategory] = useState(false);
+    const editDialgRef = React.createRef<EditAddCategoryDialog>();
+    const [pages, setPages] = useState<CategoryUiState>({
+        categories: [],
+        maxRowsPerPage: 50,
+        page: 1,
+        totalCategories: 0
+
+    });
+
+    const [search, setSearch] = useState('');
+    const [showAddEditCayegory, setShowAddEditCategory] = useState(false);
     const [editMode, setEditMode] = useState(true);
     const [category, setCategory] = useState<CategoriesDto>()
+
+    /**
+     * Ottieni le categorie
+     */
+    const loadCategories = useCallback(async (_search= '', _page=1, _maxRows=50) => {
+
+        const categoryService = new CategoryService();
+
+        const resultData = await categoryService.loadAll(_search,_page,_maxRows);
+
+        if(!!resultData){
+            setPages({
+                categories: resultData.items,
+                maxRowsPerPage: resultData.maxRowsPerPage,
+                page: resultData.pageIndex,
+                totalCategories: resultData.totalResults
+            });
+        } else {
+            setPages({
+                categories: [],
+                maxRowsPerPage: _maxRows,
+                page: 1,
+                totalCategories:0
+            });
+        }
+    },[setPages]);
+
+    // carica all'avvio tutte le categorie
+    useEffect(()=>{
+        loadCategories();
+    }, [loadCategories]);
 
     const cols: ColumnType[] = [
         {
@@ -73,7 +117,7 @@ export default function CategoriesUI(props: CategoryUiType) {
             renderRow: (value, row, cellIndex, rowIndex) => {
                 if (!!value) {
                     return <ButtonGroup size="small" aria-label="Actions buttos edit and delete category" style={{ gap: 2 }} >
-                        <Button key="edit" onClick={onEditCategory.bind(this,row)} color="secondary" startIcon={<Edit />} >Edit</Button>,
+                        <Button key="edit" onClick={onEditCategory.bind(this, row)} color="secondary" startIcon={<Edit />} >Edit</Button>,
                         <Button key="delete" color="error" startIcon={<Delete />}>Delete</Button>,
                     </ButtonGroup>
                 }
@@ -133,13 +177,16 @@ export default function CategoriesUI(props: CategoryUiType) {
     ]
 
     function onAddCategory() {
+        editDialgRef.current.clearFields();
         setCategory(undefined);
         setEditMode(false);
         setShowAddEditCategory(true);
     }
 
-    function onEditCategory(category:CategoriesDto) {
+    function onEditCategory(category: CategoriesDto) {
+        editDialgRef.current.setCategory(category);
         setCategory(category);
+        editDialgRef.current.loadCategory(category.id);
         setEditMode(true);
         setShowAddEditCategory(true);
     }
@@ -148,26 +195,34 @@ export default function CategoriesUI(props: CategoryUiType) {
         setShowAddEditCategory(false);
     }
     return <>
-    <EditAddCategoryDialog show={showAddEditCayegory} category={category} edit={editMode}  close={onCloseDialog}/>
-    <div className="w-full">
-        <Paper elevation={4} sx={{ width: '100%', marginTop: "5px", padding: 2 }}>
-            <div className="flex justify-between items-center">
-                <FormGroup>
-                    <Search>
-                        <SearchIconWrapper>
-                            <SearchIcon />
-                        </SearchIconWrapper>
-                        <StyledInputBase
-                            placeholder="Search…"
-                            inputProps={{ 'aria-label': 'search' }}
-                        />
-                    </Search>
-                </FormGroup>
-                <Button size="small" color="primary" variant="outlined" onClick={onAddCategory} title="Add new category"> <Add /> Add </Button>
-            </div>
-        </Paper>
-        <DataTable rows={props.categories} columns={cols} maxRowsPerPage={props.maxRowsPerPage} totalRows={props.totalCategories} />
+        <EditAddCategoryDialog ref={editDialgRef} show={showAddEditCayegory} category={category} edit={editMode} close={onCloseDialog} />
+        <div className="w-full">
+            <Paper elevation={4} sx={{ width: '100%', marginTop: "5px", padding: 2 }}>
+                <div className="flex justify-between items-center">
+                    <FormGroup>
+                        <Search>
+                            <SearchIconWrapper>
+                                <SearchIcon />
+                            </SearchIconWrapper>
+                            <StyledInputBase onChange={(evn) =>{
+                                setSearch(evn.target.value);
+                                loadCategories(evn.target.value);
+                            }}
+                                value={search}
+                                placeholder="Search…"
+                                inputProps={{ 'aria-label': 'search' }}
+                            />
+                        </Search>
+                    </FormGroup>
+                    <Button size="small" color="primary" variant="outlined" onClick={onAddCategory} title="Add new category"> <Add /> Add </Button>
+                </div>
+            </Paper>
+            <Suspense fallback={<Waiting opened={true} />}>
+                <DataTable onChangePage={(_newPage)=>{
+                    loadCategories(search,_newPage,pages.maxRowsPerPage)
+                }} rows={pages.categories} columns={cols} maxRowsPerPage={pages.maxRowsPerPage} totalRows={pages.totalCategories} />
+            </Suspense>
 
-    </div></>
+        </div></>
 
 }

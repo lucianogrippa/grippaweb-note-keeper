@@ -1,0 +1,58 @@
+import { getUUIDFromHeaders } from "@/lib/auth/services/token-check";
+import CategoryRepository from "@/lib/services/categoris-repository";
+import { NextRequest, NextResponse } from "next/server";
+
+import { CategoriesDto } from "../../dto/categories";
+import ResponseDto from "../../dto/ResponseDto";
+import { NextApiRequest, NextApiResponse } from "next";
+
+export async function GET(_req: NextApiRequest, params? : {params : {
+    id: number
+}}) {
+    const uuid = await getUUIDFromHeaders();
+
+    // ricerca per nome o descrizione
+    const id = params?.params.id;
+
+    
+    let category: CategoriesDto = null
+
+    try {
+
+        if (!uuid || !id || isNaN(Number(id))) {
+            return NextResponse.json({
+                error: true,
+                message: 'NOT-FOUND'
+            }, {
+                status: 404,
+            })
+        }
+        
+        const categoryRepository = new CategoryRepository(uuid);
+
+        const categoryRersult = await categoryRepository.findById(Number(id));
+
+        if (categoryRersult && categoryRersult.id > 0) {
+
+            const responseData: ResponseDto<CategoriesDto> = {
+                data: categoryRersult,
+                error: false,
+                message: 'OK'
+            }
+
+            return NextResponse.json(responseData, {
+                status: 200,
+            })
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+
+    return NextResponse.json({
+        error: true,
+        message: 'NOT-FOUND'
+    }, {
+        status: 404,
+    })
+}

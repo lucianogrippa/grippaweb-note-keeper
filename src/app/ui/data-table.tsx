@@ -20,11 +20,12 @@ type DataTableProps = {
     rows?: any[],
     totalRows?: number,
     maxRowsPerPage?: number,
+    onChangePage?: (page: number) =>void
     onRowClick?: (rowValue: any) => void
 }
 
 
-export default function DataTable({ columns, rows, totalRows, maxRowsPerPage, onRowClick }: DataTableProps) {
+export default function DataTable({ columns, rows, totalRows, maxRowsPerPage, onRowClick , onChangePage}: DataTableProps) {
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(maxRowsPerPage);
 
@@ -38,6 +39,8 @@ export default function DataTable({ columns, rows, totalRows, maxRowsPerPage, on
 
     const handleChangePage = (event: any, newPage: number) => {
         setPage(newPage);
+
+        onChangePage && onChangePage(newPage);
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -81,7 +84,7 @@ export default function DataTable({ columns, rows, totalRows, maxRowsPerPage, on
                 </Table>
             {totalRows > 0 ?
                 <TablePagination
-                    rowsPerPageOptions={[10, 25, 100]}
+                    rowsPerPageOptions={[10, 25, 50, 100]}
                     component="div"
                     count={totalRows}
                     rowsPerPage={rowsPerPage}
