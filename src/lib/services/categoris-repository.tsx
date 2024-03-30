@@ -1,33 +1,34 @@
+import logger from "../logger-settings";
 import CategoriesDto from "../models/categories";
 import { PagedResults } from "../models/paged-results";
 
 export default class CategoryRepository {
-   
+
 
     constructor(private uuid: string) { }
 
     async findById(_id: number): Promise<CategoriesDto> {
-      try {
-        const category = await prisma.categories.findFirst({
-            select: {
-                id: true,
-                name: true,
-                code: true,
-                description: true,
-                icon: true,
-                commons: true
-            },
-            where: {
-                id: _id
-            }
-        });
+        try {
+            const category = await prisma.categories.findFirst({
+                select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                    description: true,
+                    icon: true,
+                    commons: true
+                },
+                where: {
+                    id: _id
+                }
+            });
 
-        return category;
-      } catch (error) {
-        console.error(error);
-      }
+            return category;
+        } catch (error) {
+            console.error(error);
+        }
 
-      return null;
+        return null;
     }
     async loadAllCategories(search: string = '', pageIndex: number = 1, maxRowsPerPage: number = 100): Promise<PagedResults<CategoriesDto>> {
 
@@ -168,5 +169,66 @@ export default class CategoryRepository {
                 }
             });
         }
+    }
+
+    async save(body: CategoriesDto, uuid: number): Promise<CategoriesDto> {
+
+        try {
+
+            let savedCat = null;
+            // esegui update
+            if (!!body && body.id > 0) {
+                savedCat = await prisma.categories.update({
+                    where: {
+                        id: body.id
+                    },
+                    data: {
+                        name: body.name,
+                        description: body.description,
+                        code: body.code,
+                        commons: body.commons,
+                        icon: body.icon
+                    }
+                });
+
+            } else if (!!body) {
+                savedCat = await prisma.categories.create({
+                    data: {
+                        name: body.name,
+                        description: body.description,
+                        code: body.code,
+                        commons: body.commons,
+                        icon: body.icon,
+                        uuid
+                    }
+                });
+
+
+            }
+            return savedCat;
+        } catch (error) {
+            logger.error(error);
+        }
+
+        return null;
+    }
+
+    async deleteById(id: number) : Promise<boolean> {
+
+        try {
+            if(id>0){
+                const resultDelete = await prisma.categories.delete({
+                    where: {
+                        id
+                    }
+                });
+
+                return resultDelete.id>0;
+            }
+        } catch (error) {
+            logger.error(error);
+        }
+
+        return false;
     }
 }

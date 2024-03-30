@@ -45,4 +45,49 @@ export default class CategoryService {
 
         return null
     }
+
+    async save(category:CategoriesDto): Promise<CategoriesDto> {
+        try {
+            
+            const fetchApi = await fetch(`${this.basePath}`,{
+                method: "POST",
+                body: JSON.stringify(category)
+            });
+
+            if(fetchApi && fetchApi.ok){
+                const body = await fetchApi.json();
+
+                if(!!body && !body.error) {
+                    return body.data;
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+
+        return null
+    }
+
+    async delete(id: number): Promise<PagedResults<boolean>> {
+        try {
+            
+            const fetchApi = await fetch(`${this.basePath}/${id}`,{
+                method: "DELETE"
+            });
+
+            if(fetchApi && fetchApi.ok){
+                const body = await fetchApi.json();
+
+                if(!!body && !body.error) {
+                    return body.data;
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+
+        return null
+    }
 } 

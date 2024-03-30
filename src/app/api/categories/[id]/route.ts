@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CategoriesDto } from "../../dto/categories";
 import ResponseDto from "../../dto/ResponseDto";
 import { NextApiRequest, NextApiResponse } from "next";
+import logger from "@/lib/logger-settings";
 
 export async function GET(_req: NextApiRequest, params? : {params : {
     id: number
@@ -55,4 +56,37 @@ export async function GET(_req: NextApiRequest, params? : {params : {
     }, {
         status: 404,
     })
+}
+
+export async function DELETE(_req: NextRequest, params?:{params : {
+    id: number
+}}) {
+    try {
+        const uuid = await getUUIDFromHeaders();
+    
+        const categoryRepository = new CategoryRepository(uuid);
+        // ricerca per nome o descrizione
+        const id = params?.params.id;
+    
+        if(!isNaN(id) && Number(id)>0) {
+            const deleteObj = await categoryRepository.deleteById(id);
+    
+            return NextResponse.json({
+                error: false,
+                message: 'ok',
+                data: deleteObj
+            }, {
+                status: 200,
+            });
+        }
+    } catch (error) {
+        logger.error(error);
+    }
+
+    return NextResponse.json({
+        error: true,
+        message: 'ERROR_DELETE'
+    }, {
+        status: 400,
+    });
 }

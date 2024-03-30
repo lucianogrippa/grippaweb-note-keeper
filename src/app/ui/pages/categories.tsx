@@ -8,6 +8,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import EditAddCategoryDialog from "../dialogs/add-category-dialog";
 import { Waiting } from "../waiting";
 import CategoryService from "@/lib/services/category-service";
+import AlertDialog from "../dialogs/alert-dialog";
 
 export type CategoryUiState = {
     categories?: CategoriesDto[],
@@ -62,6 +63,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 export default function CategoriesUI() {
 
+    const alertDialogRef = React.createRef<AlertDialog>();
     const editDialgRef = React.createRef<EditAddCategoryDialog>();
     const [pages, setPages] = useState<CategoryUiState>({
         categories: [],
@@ -75,12 +77,14 @@ export default function CategoriesUI() {
     const [showAddEditCayegory, setShowAddEditCategory] = useState(false);
     const [editMode, setEditMode] = useState(true);
     const [category, setCategory] = useState<CategoriesDto>()
+    const [loading,setLoading] = useState(false);
 
     /**
      * Ottieni le categorie
      */
     const loadCategories = useCallback(async (_search= '', _page=1, _maxRows=50) => {
 
+        setLoading(true);
         const categoryService = new CategoryService();
 
         const resultData = await categoryService.loadAll(_search,_page,_maxRows);
@@ -100,6 +104,7 @@ export default function CategoriesUI() {
                 totalCategories:0
             });
         }
+        setLoading(false);
     },[setPages]);
 
     // carica all'avvio tutte le categorie
@@ -118,7 +123,7 @@ export default function CategoriesUI() {
                 if (!!value) {
                     return <ButtonGroup size="small" aria-label="Actions buttos edit and delete category" style={{ gap: 2 }} >
                         <Button key="edit" onClick={onEditCategory.bind(this, row)} color="secondary" startIcon={<Edit />} >Edit</Button>,
-                        <Button key="delete" color="error" startIcon={<Delete />}>Delete</Button>,
+                        <Button key="delete" color="error" onClick={onDeleteCategory.bind(this, row)} startIcon={<Delete />}>Delete</Button>,
                     </ButtonGroup>
                 }
 
@@ -191,10 +196,46 @@ export default function CategoriesUI() {
         setShowAddEditCategory(true);
     }
 
+    async function onDeleteCategory(category: CategoriesDto)  {
+        setCategory(category);
+        
+        alertDialogRef.current.showConfirm("you are deleting the category "+category.name+". Are you sure?", "DELETE CATEGORY","No", "Yes");
+    }
+
+    async function onCloseAlertDialog(feedback: "close-button" | "confirm-button") {
+        if(feedback === "confirm-button"){
+            setLoading(true);
+
+            try {
+                const categoryService = new CategoryService();
+
+                const resultDelete = await categoryService.delete(category.id);
+
+                setLoading(false);
+
+                if(resultDelete){
+                    setCategory(undefined);
+                    await loadCategories(search);
+
+                    return;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+            setCategory(undefined);
+            setLoading(false);
+        } else {
+            setCategory(undefined);
+        }
+    }
+
     function onCloseDialog(feedback) {
         setShowAddEditCategory(false);
+        loadCategories(search);
     }
     return <>
+        <Waiting opened={loading} message="Load categories" />
+        <AlertDialog ref={alertDialogRef} onCloseDialog={onCloseAlertDialog} />
         <EditAddCategoryDialog ref={editDialgRef} show={showAddEditCayegory} category={category} edit={editMode} close={onCloseDialog} />
         <div className="w-full">
             <Paper elevation={4} sx={{ width: '100%', marginTop: "5px", padding: 2 }}>
