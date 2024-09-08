@@ -30,13 +30,11 @@ const navItems: { name: string, path: string, title?: string }[] = [
     path: '/main',
     title: 'list all secreats'
 },
-{ name: 'Categories', path: '/main/categories',  title: 'list all categories' }, {
-    name: ' ', path: '#'
-}, {
-    name: ' ', path: '#'
-}, {
-    name: 'Logout', path: '/api/auth/logout', title: 'return to login page'
-}];
+{ name: 'Categories', path: '/main/categories',  title: 'list all categories' }, 
+{name: 'Labels', path: '/main/labels', title: 'list alla labels'}, 
+{name: ' ', path: '#'}, 
+{name: 'Logout', path: '/api/auth/logout', title: 'return to login page'}
+];
 
 
 
