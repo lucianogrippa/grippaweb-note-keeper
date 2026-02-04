@@ -1,10 +1,10 @@
-# Note Keeper
+
+# note_keeper
 
 Note Keeper is an offline app for organizing notes and securely storing sensitive information, such as passwords. Your data stays on your device and is not sent to a server or cloud service. The local database is encrypted, and a master key is generated on first launch and stored using the platform's secure storage.
 
 Organize your notes into categories and groups, and protect access to the app with a local account.
 
-## Getting started
 
 ### Supported platforms
 
@@ -29,3 +29,4 @@ flutter build windows
 ```
 
 If a prebuilt release is available, download it from the project's [Releases](https://github.com/lucianogrippa/grippaweb-note-keeper/releases) page.
+>>>>>>> c0b4ffe (Initial commit)
