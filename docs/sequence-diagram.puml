@@ -1,0 +1,32 @@
+@startuml
+
+title Add/Edit user - Sequence Diagram 
+
+actor "User" as admin
+participant "User Management Service" as ums
+participant "Database" as db
+
+' scenario: Admin adds or edits a user '
+admin -> ums: Request to add/edit user
+ums -> db: Validate user data
+db --> ums: Validation result
+alt Validation successful
+    ums -> db: Save user data
+    db --> ums: Confirmation of save
+    ums --> admin: User added/edited successfully
+else Validation failed
+    ums --> admin: Error message with validation issues
+end
+
+' scenario: Admin cancels the operation '
+admin -> ums: Cancel add/edit user operation
+ums --> admin: Operation cancelled confirmation
+
+' scenario: Admin requests user details for editing ' 
+admin -> ums: Request user details for editing
+ums -> db: Fetch user details
+db --> ums: User details
+ums --> admin: Display user details for editing
+
+
+@enduml

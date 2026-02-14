@@ -1,0 +1,27 @@
+@startuml PasswordKeeperClassDiagram
+
+title Class Diagram for Password Keeper Application
+
+package domain <<Domain>> {
+    class User {
+        - id: UUID
+        - username: String
+        - email: String
+        - passwordHash: String
+        + validatePassword(password: String): boolean
+    }
+
+    class PasswordEntry {
+        - id: UUID
+        - userId: UUID
+        - title: String
+        - username: String
+        - password: String
+        - url: String
+        + encryptPassword(): void
+        + decryptPassword(): void
+    }
+  
+}
+
+@enduml
