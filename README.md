@@ -4,6 +4,7 @@ This application is designed to store categorized information securely. Users ha
 Each user can only manage the categories and items they have created.
 The main components of the application are:
 
+
 ## Group
 
 Defines a logical collection of users.
@@ -50,3 +51,10 @@ Communication: The client interacts with the Backend exclusively via HTTP/HTTPS 
 the below figure depicts the database structure:
 
 ![alt text](docs/erd-databse.png)
+
+# Folder Structure
+
+/src: frontend angulkar app
+
+/src-tauri: tauri rust app
+-- 
