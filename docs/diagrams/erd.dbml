@@ -1,26 +1,26 @@
 Table groups {
-    id string [pk, default: `(lower(hex(randomblob(16))))`]
-    categories_id string [not null, ref: > categories.id]
-    name string [not null]
+    id Text [pk, default: `(lower(hex(randomblob(16))))`]
+    categories_id Text [not null, ref: > categories.id]
+    name Text [not null]
     created_at timestamp [not null]
     updated_at timestamp [not null]
     note: 'This table represents groups of notes within a category. Each group can contain multiple notes. The created_at and updated_at fields track when the group was created and last updated.'
 }
 
 Table user_profile {
-    id string [pk, default: `(lower(hex(randomblob(16))))`]
-    full_name string [not null]
-    password_hash string [not null]
+    id Text [pk, default: `(lower(hex(randomblob(16))))`]
+    full_name Text [not null]
+    password_hash Text [not null]
     created_at timestamp [not null]
     updated_at timestamp [not null]
     note: 'This table represents the user profile. Each user can have multiple categories of notes. The password_hash field is used to store the hashed password for authentication purposes, and the created_at and updated_at fields track when the user profile was created and last updated.'
 }
 
 Table categories {
-    id string [pk, default: `(lower(hex(randomblob(16))))`]
-    user_id string [not null, ref: > user_profile.id]
-    name string [not null]
-    description string
+    id Text [pk, default: `(lower(hex(randomblob(16))))`]
+    user_id Text [not null, ref: > user_profile.id]
+    name Text [not null]
+    description Text
     created_at timestamp [not null]
     updated_at timestamp [not null]
     note: 'This table represents categories of notes for a user. Each category can have multiple groups of notes. The description field is optional and can be used to provide additional information about the category.'
@@ -28,10 +28,10 @@ Table categories {
 }
 
 Table  notes {
-    id string [pk, default: `(lower(hex(randomblob(16))))`]
-    groups_id string [not null, ref: > groups.id]
-    title string [not null]
-    content string [not null]
+    id Text [pk, default: `(lower(hex(randomblob(16))))`]
+    groups_id Text [not null, ref: > groups.id]
+    title Text [not null]
+    content Text [not null]
     is_encrypted boolean [not null, default: false]
     created_at timestamp [not null]
     updated_at timestamp [not null]
@@ -39,9 +39,9 @@ Table  notes {
 }
 
 Table db_version {
-    id string [pk, default: `(lower(hex(randomblob(16))))`]
+    id Text [pk, default: `(lower(hex(randomblob(16))))`]
     created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
-    ver string [not null]
+    ver Text [not null]
 
     note: 'This table is used to track the version of the database schema. It can be useful for managing migrations and ensuring compatibility with different versions of the application.'
 }
