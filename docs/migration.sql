@@ -1,54 +1,42 @@
+PRAGMA foreign_keys = ON;
 
-CREATE TABLE IF NOT EXISTS authority
-(
+CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    name TEXT NOT NULL,
-    description TEXT
+    username TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS groups
-(
-    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    name TEXT NOT NULL,
-    description TEXT
-);
-
-CREATE TABLE IF NOT EXISTS "user"
-(
-    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    autority_id TEXT NOT NULL,
-    group_id TEXT NOT NULL,
-    full_name TEXT,
-    email TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    hashed_password TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
-    FOREIGN KEY (autority_id) REFERENCES authority (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES groups (id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS category
-(
+CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    crypted BOOLEAN NOT NULL DEFAULT 0,
-    create_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES "user" (id) ON UPDATE CASCADE ON DELETE CASCADE
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS item
-(
+CREATE TABLE IF NOT EXISTS groups (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    category_id TEXT NOT NULL,
-    description TEXT,
+    categories_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (categories_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS items (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    groups_id TEXT NOT NULL,
     title TEXT NOT NULL,
-    created_at TIMESTAMP,
-    content JSON,
-    crypted BOOLEAN NOT NULL DEFAULT 0,
-    FOREIGN KEY (category_id) REFERENCES category (id) ON UPDATE CASCADE ON DELETE CASCADE
+    content TEXT NOT NULL,
+    is_encrypted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (groups_id) REFERENCES groups(id)
 );
 
 CREATE TABLE IF NOT EXISTS db_version

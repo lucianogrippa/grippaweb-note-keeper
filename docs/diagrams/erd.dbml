@@ -9,7 +9,7 @@ Table groups {
 Table users {
     id string [pk]
     username string [not null]
-    email string [not null]
+    full_name string [not null]
     password_hash string [not null]
     created_at timestamp [not null]
     updated_at timestamp [not null]
