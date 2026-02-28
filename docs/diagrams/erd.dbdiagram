@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "detailLevel": "Tables",
+  "tablePositions": [
+    {
+      "name": "groups",
+      "schemaName": "public",
+      "x": 173,
+      "y": 60.00021699039897
+    },
+    {
+      "name": "users",
+      "schemaName": "public",
+      "x": -104,
+      "y": 4.994032764027452
+    },
+    {
+      "name": "categories",
+      "schemaName": "public",
+      "x": -96.842041015625,
+      "y": 149.99468373522444
+    },
+    {
+      "name": "items",
+      "schemaName": "public",
+      "x": 168,
+      "y": 142.00199631167075
+    }
+  ],
+  "tableGroupCollapseStates": [],
+  "stickyNoteLayouts": [],
+  "referencePaths": [
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "categories",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "groups",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "categories",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        ""
+      ],
+      "firstTableName": "groups",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        ""
+      ],
+      "secondTableName": "items",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    }
+  ]
+}

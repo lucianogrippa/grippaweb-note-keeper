@@ -1,9 +1,11 @@
 ## Introduction
 
 This application is designed to store categorized information securely. Users have the option to encrypt their data or store it as plain text.
-Each user can only manage the categories and items they have created.
-The main components of the application are:
+Each user can only handle the categories and items they have created.
+The application use encrypt local database, the first login it will ask to insert master password used to encrypt database and data related to your account.
 
+
+The main components of the application are:
 
 ## Group
 

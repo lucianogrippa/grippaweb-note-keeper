@@ -1,0 +1,35 @@
+Table groups {
+    id string [pk]
+    categories_id string [not null, ref: > categories.id]
+    name string [not null]
+    created_at timestamp [not null]
+    updated_at timestamp [not null]
+}
+
+Table users {
+    id string [pk]
+    username string [not null]
+    email string [not null]
+    password_hash string [not null]
+    created_at timestamp [not null]
+    updated_at timestamp [not null]
+}
+
+Table categories {
+    id string [pk]
+    user_id string [not null, ref: > users.id]
+    name string [not null]
+    description string
+    created_at timestamp [not null]
+    updated_at timestamp [not null]
+}
+
+Table items {
+    id string [pk]
+    groups_id string [not null, ref: > groups.id]
+    title string [not null]
+    content string [not null]
+    is_encrypted boolean [not null, default: false]
+    created_at timestamp [not null]
+    updated_at timestamp [not null]
+}
