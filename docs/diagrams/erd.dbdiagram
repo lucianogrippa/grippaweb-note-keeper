@@ -11,9 +11,9 @@
       "y": 156.00230009822937
     },
     {
-      "name": "users",
+      "name": "user_profile",
       "schemaName": "public",
-      "x": -97,
+      "x": -88.842041015625,
       "y": -23.006574809089745
     },
     {
@@ -23,10 +23,16 @@
       "y": -23.006574809089745
     },
     {
-      "name": "items",
+      "name": "notes",
       "schemaName": "public",
-      "x": 198,
-      "y": 309.00562005133406
+      "x": -88.842041015625,
+      "y": 539.0056200513341
+    },
+    {
+      "name": "db_version",
+      "schemaName": "public",
+      "x": -88.842041015625,
+      "y": 424.00562005133406
     }
   ],
   "tableGroupCollapseStates": [],
@@ -51,7 +57,7 @@
       "firstFieldNames": [
         ""
       ],
-      "firstTableName": "users",
+      "firstTableName": "user_profile",
       "firstSchemaName": "public",
       "firstRelation": "1",
       "secondFieldNames": [
@@ -72,7 +78,7 @@
       "secondFieldNames": [
         ""
       ],
-      "secondTableName": "items",
+      "secondTableName": "notes",
       "secondSchemaName": "public",
       "secondRelation": "*",
       "checkPoints": []

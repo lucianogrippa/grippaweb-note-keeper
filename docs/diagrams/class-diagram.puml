@@ -3,25 +3,30 @@
 title Class Diagram for Password Keeper Application
 
 package domain <<Domain>> {
-    class User {
-        - id: UUID
+
+    class Groups {
+        - catetoryId: String
+    }
+
+    class UserProfile {
+        - id: String
         - username: String
         - email: String
         - passwordHash: String
         + validatePassword(password: String): boolean
     }
 
-    class PasswordEntry {
-        - id: UUID
-        - userId: UUID
-        - title: String
-        - username: String
-        - password: String
-        - url: String
-        + encryptPassword(): void
-        + decryptPassword(): void
+    class Categories {
+        - user_id: String
+
     }
-  
+
+    class Items {
+        groups_id: String
+    }
+
+    Groups 
+
 }
 
 @enduml
