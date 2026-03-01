@@ -1,0 +1,323 @@
+<div class="profile-container">
+  <app-navbar></app-navbar>
+  
+  <div class="main-content" [class.loaded]="isLoaded()">
+    <div class="profile-header">
+      <div class="header-gradient"></div>
+      <div class="header-content">
+        <div class="profile-avatar">
+          <div class="avatar-circle">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+        <div class="profile-info">
+          <h1>{{ currentUser()?.full_name || 'User Profile' }}</h1>
+          <p class="profile-email">{{ currentUser()?.username || 'user@notekeeper.com' }}</p>
+          <p class="member-since">Member since {{ currentUser()?.created_at | date:'MMMM yyyy' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-content">
+      <!-- Personal Information Section -->
+      <section class="profile-section">
+        <div class="section-header">
+          <h2><i class="fas fa-user-circle"></i> Personal Information</h2>
+          <button 
+            *ngIf="!isEditing()" 
+            class="btn btn-primary"
+            (click)="startEditing()"
+          >
+            <i class="fas fa-edit"></i> Edit Profile
+          </button>
+        </div>
+
+        <div class="section-content">
+          <div class="form-group">
+            <label for="full-name">Full Name</label>
+            <input
+              id="full-name"
+              type="text"
+              class="form-control"
+              [value]="profileForm().full_name"
+              [disabled]="!isEditing()"
+              (input)="updateFullName($event)"
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              class="form-control"
+              [value]="currentUser()?.username || ''"
+              disabled
+              placeholder="Username cannot be changed"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="note-password">Note Encryption Password</label>
+            <input
+              id="note-password"
+              type="password"
+              class="form-control"
+              [value]="profileForm().note_password"
+              [disabled]="!isEditing()"
+              (input)="updateNotePassword($event)"
+              placeholder="Password for encrypting notes"
+            />
+            <p class="form-help">Used to encrypt/decrypt your private notes</p>
+          </div>
+
+          <div class="form-actions" *ngIf="isEditing()">
+            <button 
+              class="btn btn-success"
+              (click)="saveProfile()"
+              [disabled]="isSaving()"
+            >
+              <i class="fas fa-save"></i> 
+              {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button 
+              class="btn btn-secondary"
+              (click)="cancelEditing()"
+              [disabled]="isSaving()"
+            >
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Security Section -->
+      <section class="profile-section">
+        <div class="section-header">
+          <h2><i class="fas fa-shield-alt"></i> Security</h2>
+          <button 
+            class="btn btn-primary"
+            (click)="showPasswordChange.set(!showPasswordChange())"
+          >
+            <i class="fas fa-key"></i> Change Password
+          </button>
+        </div>
+
+        <div class="section-content">
+          <div class="security-info">
+            <div class="security-item">
+              <i class="fas fa-check-circle text-success"></i>
+              <span>Password last changed: {{ currentUser()?.updated_at | date:'mediumDate' }}</span>
+            </div>
+            <div class="security-item">
+              <i class="fas fa-check-circle text-success"></i>
+              <span>Two-factor authentication: Not configured</span>
+            </div>
+          </div>
+
+          <div class="password-change-form" *ngIf="showPasswordChange()">
+            <div class="form-group">
+              <label for="current-password">Current Password</label>
+              <input
+                id="current-password"
+                type="password"
+                class="form-control"
+                [value]="passwordForm().current_password"
+                (input)="updateCurrentPassword($event)"
+                placeholder="Enter current password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-password">New Password</label>
+              <input
+                id="new-password"
+                type="password"
+                class="form-control"
+                [value]="passwordForm().new_password"
+                (input)="updateNewPassword($event)"
+                placeholder="Enter new password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Confirm New Password</label>
+              <input
+                id="confirm-password"
+                type="password"
+                class="form-control"
+                [value]="passwordForm().confirm_password"
+                (input)="updateConfirmPassword($event)"
+                placeholder="Confirm new password"
+              />
+            </div>
+
+            <div class="form-actions">
+              <button 
+                class="btn btn-success"
+                (click)="changePassword()"
+                [disabled]="isSaving()"
+              >
+                <i class="fas fa-save"></i> 
+                {{ isSaving() ? 'Changing...' : 'Change Password' }}
+              </button>
+              <button 
+                class="btn btn-secondary"
+                (click)="showPasswordChange.set(false)"
+                [disabled]="isSaving()"
+              >
+                <i class="fas fa-times"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section class="profile-section">
+        <div class="section-header">
+          <h2><i class="fas fa-cog"></i> Settings</h2>
+        </div>
+
+        <div class="section-content">
+          <div class="settings-grid">
+            <!-- Auto Encrypt -->
+            <div class="setting-item">
+              <label class="setting-label">
+                <input
+                  type="checkbox"
+                  [checked]="settings().auto_encrypt"
+                  (change)="toggleAutoEncrypt()"
+                />
+                <span class="setting-title">Auto-encrypt new notes</span>
+              </label>
+              <p class="setting-description">Automatically encrypt new notes when created</p>
+            </div>
+
+            <!-- Auto Save -->
+            <div class="setting-item">
+              <label class="setting-title">Auto-save interval</label>
+              <select 
+                class="form-control"
+                [value]="settings().auto_save_interval"
+                (change)="updateAutoSaveInterval($event)"
+              >
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+              </select>
+              <p class="setting-description">How often to automatically save note changes</p>
+            </div>
+
+            <!-- Theme -->
+            <div class="setting-item">
+              <label class="setting-title">Theme</label>
+              <div class="theme-controls">
+                <select 
+                  class="form-control"
+                  [value]="settings().theme"
+                  (change)="updateTheme($event)"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="auto">Auto (System)</option>
+                </select>
+                <button 
+                  class="theme-toggle-btn"
+                  (click)="themeService.toggleTheme()"
+                  [title]="'Current: ' + themeService.currentTheme()"
+                >
+                  @if (themeService.currentTheme() === 'light') {
+                    <i class="fas fa-sun"></i>
+                  } @else if (themeService.currentTheme() === 'dark') {
+                    <i class="fas fa-moon"></i>
+                  } @else {
+                    <i class="fas fa-adjust"></i>
+                  }
+                </button>
+              </div>
+              <p class="setting-description">Choose your preferred color scheme</p>
+            </div>
+
+            <!-- Backup -->
+            <div class="setting-item">
+              <label class="setting-label">
+                <input
+                  type="checkbox"
+                  [checked]="settings().backup_enabled"
+                  (change)="toggleBackupEnabled()"
+                />
+                <span class="setting-title">Enable automatic backups</span>
+              </label>
+              <p class="setting-description">Automatically backup your data to cloud storage</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Management Section -->
+      <section class="profile-section">
+        <div class="section-header">
+          <h2><i class="fas fa-database"></i> Data Management</h2>
+        </div>
+
+        <div class="section-content">
+          <div class="data-actions">
+            <div class="action-item">
+              <div class="action-info">
+                <h3>Export Data</h3>
+                <p>Download a copy of all your notes and settings</p>
+              </div>
+              <button class="btn btn-primary" (click)="exportData()">
+                <i class="fas fa-download"></i> Export
+              </button>
+            </div>
+
+            <div class="action-item">
+              <div class="action-info">
+                <h3>Import Data</h3>
+                <p>Restore notes from a previous backup</p>
+              </div>
+              <button class="btn btn-primary" disabled>
+                <i class="fas fa-upload"></i> Import
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account Actions Section -->
+      <section class="profile-section danger-section">
+        <div class="section-header">
+          <h2><i class="fas fa-exclamation-triangle"></i> Account Actions</h2>
+        </div>
+
+        <div class="section-content">
+          <div class="danger-actions">
+            <div class="action-item">
+              <div class="action-info">
+                <h3>Logout</h3>
+                <p>Sign out of your current session</p>
+              </div>
+              <button class="btn btn-warning" (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </div>
+
+            <div class="action-item danger">
+              <div class="action-info">
+                <h3>Delete Account</h3>
+                <p>Permanently delete your account and all data</p>
+              </div>
+              <button class="btn btn-danger" (click)="deleteAccount()">
+                <i class="fas fa-trash"></i> Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

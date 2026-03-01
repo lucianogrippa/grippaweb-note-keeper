@@ -1,0 +1,305 @@
+<div class="login-container">
+  <!-- Animated Background -->
+  <div class="animated-bg">
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+    </div>
+  </div>
+
+  <div class="login-wrapper">
+    <!-- Brand Section -->
+    <div class="brand-section">
+      <div class="logo-container">
+        <div class="logo">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="url(#gradient1)"/>
+            <path d="M12 8L12.45 11.13L16 11.5L12.45 11.87L12 15L11.55 11.87L8 11.5L11.55 11.13L12 8Z" fill="url(#gradient2)"/>
+            <defs>
+              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#667eea"/>
+                <stop offset="100%" style="stop-color:#764ba2"/>
+              </linearGradient>
+              <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#f093fb"/>
+                <stop offset="100%" style="stop-color:#f5576c"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1 class="brand-name">NoteKeeper</h1>
+      </div>
+      @if (isFirstTimeSetup()) {
+        <p class="brand-tagline">Secure your thoughts, organize your life</p>
+      } @else {
+        <p class="brand-tagline">Welcome back! Enter your master password</p>
+      }
+    </div>
+
+    <!-- First Time Setup Form -->
+    @if (isFirstTimeSetup()) {
+      <div class="login-card setup-card">
+        <div class="card-header">
+          <h2>Welcome to NoteKeeper!</h2>
+          <p>Let's set up your secure note-taking environment</p>
+        </div>
+
+        <form [formGroup]="setupForm" (ngSubmit)="onSetupSubmit()" class="login-form">
+          <!-- Full Name Field -->
+          <div class="form-group">
+            <label for="full_name">Full Name</label>
+            <div class="input-container">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                type="text"
+                id="full_name"
+                formControlName="full_name"
+                placeholder="Enter your full name"
+                [class.error]="setupForm.get('full_name')?.touched && setupForm.get('full_name')?.errors"
+              />
+            </div>
+            @if (getFieldError('setup', 'full_name')) {
+              <span class="error-message">{{ getFieldError('setup', 'full_name') }}</span>
+            }
+          </div>
+
+          <!-- Note Password Field -->
+          <div class="form-group">
+            <label for="note_password">Note Encryption Password</label>
+            <div class="field-description">This password will be used to encrypt/decrypt your notes</div>
+            <div class="input-container">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <input
+                [type]="showNotePassword() ? 'text' : 'password'"
+                id="note_password"
+                formControlName="note_password"
+                placeholder="Enter password for note encryption"
+                [class.error]="setupForm.get('note_password')?.touched && setupForm.get('note_password')?.errors"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleNotePasswordVisibility()"
+              >
+                @if (showNotePassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 3L21 21M9.88 9.88C9.33 10.42 9 11.16 9 12C9 13.66 10.34 15 12 15C12.84 15 13.58 14.67 14.12 14.12M6.61 6.61C4.62 7.96 3.25 9.91 2.68 12.2C4.06 16.26 7.72 19 12 19C13.65 19 15.2 18.64 16.61 17.99M17.94 17.94C19.15 16.78 20.08 15.32 20.68 13.7C19.32 9.64 15.66 7 11.38 7C10.22 7 9.1 7.2 8.06 7.57" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('setup', 'note_password')) {
+              <span class="error-message">{{ getFieldError('setup', 'note_password') }}</span>
+            }
+          </div>
+
+          <!-- Master Password Field -->
+          <div class="form-group">
+            <label for="master_password">Master Password</label>
+            <div class="field-description">This password will be used to encrypt your entire database</div>
+            <div class="input-container">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 10V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V10M7 10H17M7 10H6C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                [type]="showMasterPassword() ? 'text' : 'password'"
+                id="master_password"
+                formControlName="master_password"
+                placeholder="Enter master password"
+                [class.error]="setupForm.get('master_password')?.touched && setupForm.get('master_password')?.errors"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleMasterPasswordVisibility()"
+              >
+                @if (showMasterPassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 3L21 21M9.88 9.88C9.33 10.42 9 11.16 9 12C9 13.66 10.34 15 12 15C12.84 15 13.58 14.67 14.12 14.12M6.61 6.61C4.62 7.96 3.25 9.91 2.68 12.2C4.06 16.26 7.72 19 12 19C13.65 19 15.2 18.64 16.61 17.99M17.94 17.94C19.15 16.78 20.08 15.32 20.68 13.7C19.32 9.64 15.66 7 11.38 7C10.22 7 9.1 7.2 8.06 7.57" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('setup', 'master_password')) {
+              <span class="error-message">{{ getFieldError('setup', 'master_password') }}</span>
+            }
+          </div>
+
+          <!-- Confirm Master Password Field -->
+          <div class="form-group">
+            <label for="confirm_master_password">Confirm Master Password</label>
+            <div class="input-container">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                type="password"
+                id="confirm_master_password"
+                formControlName="confirm_master_password"
+                placeholder="Confirm your master password"
+                [class.error]="setupForm.get('confirm_master_password')?.touched && setupForm.get('confirm_master_password')?.errors"
+              />
+            </div>
+            @if (getFieldError('setup', 'confirm_master_password')) {
+              <span class="error-message">{{ getFieldError('setup', 'confirm_master_password') }}</span>
+            }
+          </div>
+
+          <!-- Error Message -->
+          @if (error()) {
+            <div class="error-alert">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              {{ error() }}
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="login-btn"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <div class="loading-spinner"></div>
+              Setting up...
+            } @else {
+              Complete Setup
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11L12 14L22 4M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C13.4876 3 14.891 3.32298 16.1424 3.8906" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          </button>
+        </form>
+
+        <!-- Security Info -->
+        <div class="security-info">
+          <div class="security-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 1L3 5V11C3 16 6 20 12 23C18 20 21 16 21 11V5L12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Your data is encrypted locally</span>
+          </div>
+          <div class="security-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M7 10V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Strong encryption for your notes</span>
+          </div>
+          <div class="security-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>No data leaves your device</span>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Regular Login Form -->
+      <div class="login-card">
+        <div class="card-header">
+          <h2>Welcome Back!</h2>
+          <p>Enter your master password to access your notes</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="login-form">
+          <!-- Master Password Field -->
+          <div class="form-group">
+            <label for="login_master_password">Master Password</label>
+            <div class="input-container">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 10V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V10M7 10H17M7 10H6C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                [type]="showMasterPassword() ? 'text' : 'password'"
+                id="login_master_password"
+                formControlName="master_password"
+                placeholder="Enter your master password"
+                [class.error]="loginForm.get('master_password')?.touched && loginForm.get('master_password')?.errors"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleMasterPasswordVisibility()"
+              >
+                @if (showMasterPassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 3L21 21M9.88 9.88C9.33 10.42 9 11.16 9 12C9 13.66 10.34 15 12 15C12.84 15 13.58 14.67 14.12 14.12M6.61 6.61C4.62 7.96 3.25 9.91 2.68 12.2C4.06 16.26 7.72 19 12 19C13.65 19 15.2 18.64 16.61 17.99M17.94 17.94C19.15 16.78 20.08 15.32 20.68 13.7C19.32 9.64 15.66 7 11.38 7C10.22 7 9.1 7.2 8.06 7.57" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('login', 'master_password')) {
+              <span class="error-message">{{ getFieldError('login', 'master_password') }}</span>
+            }
+          </div>
+
+          <!-- Error Message -->
+          @if (error()) {
+            <div class="error-alert">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              {{ error() }}
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="login-btn"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <div class="loading-spinner"></div>
+              Signing In...
+            } @else {
+              Unlock Notes
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          </button>
+        </form>
+
+        <!-- Reset Option (for development) -->
+        <div class="reset-section">
+          <button class="reset-btn" (click)="resetApp()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C9.61386 21 7.5008 20.1956 5.86932 18.8622M3 12V7M3 12H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Reset Application
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

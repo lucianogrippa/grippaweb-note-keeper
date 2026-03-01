@@ -27,7 +27,7 @@ anyhow = "1.0.95"
 libsqlite3-sys = { version = "0.30.1", features = [
     "bundled-sqlcipher"
 ] }
-dotenv = "0.15.0"
+dotenvy = "0.15.7"
 
 [dependencies.sqlx]
 version = "0.8.3"
