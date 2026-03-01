@@ -23,5 +23,5 @@ impl Config {
 }
 
 pub fn setup() {
-    let config = Config::new();
+    let _config = Config::new();
 }

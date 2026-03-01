@@ -2,7 +2,7 @@ mod db;
 mod config;
 
 
-static  mut conn: Option<sqlx::SqliteConnection> = None;
+static  mut CONN: Option<sqlx::SqliteConnection> = None;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -11,7 +11,7 @@ fn greet(name: &str) -> String {
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub async fn run() {
+pub fn run() {
     config::setup();
     
     tauri::Builder::default()
