@@ -2241,6 +2241,7 @@ name = "note-keeper"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "dirs",
  "dotenvy",
  "libsqlite3-sys",
  "serde",
