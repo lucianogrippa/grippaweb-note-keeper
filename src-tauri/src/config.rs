@@ -40,6 +40,7 @@ pub fn setup(app: &tauri::App) {
      match fs::exists(&_config.database_path).unwrap_or_else(|_| false) {
         true => {
             println!("Database already exists at path: {}", _config.database_path);
+            app.emit_to(tauri::EventTarget::Any, "ask_master_password", "").ok();
         },
         false => {
             println!("Database does not exist at path: {}", _config.database_path);

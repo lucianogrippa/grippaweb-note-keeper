@@ -3,13 +3,7 @@
   
   <div class="main-content" [class.loaded]="isLoaded()">
     <div class="profile-header">
-      <div class="header-gradient"></div>
       <div class="header-content">
-        <div class="profile-avatar">
-          <div class="avatar-circle">
-            <i class="fas fa-user"></i>
-          </div>
-        </div>
         <div class="profile-info">
           <h1>{{ currentUser()?.full_name || 'User Profile' }}</h1>
           <p class="profile-email">{{ currentUser()?.username || 'user@notekeeper.com' }}</p>

@@ -11,38 +11,14 @@
   </div>
 
   <div class="login-wrapper">
-    <!-- Brand Section -->
-    <div class="brand-section">
-      <div class="logo-container">
-        <div class="logo">
-          <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="url(#gradient1)"/>
-            <path d="M12 8L12.45 11.13L16 11.5L12.45 11.87L12 15L11.55 11.87L8 11.5L11.55 11.13L12 8Z" fill="url(#gradient2)"/>
-            <defs>
-              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#667eea"/>
-                <stop offset="100%" style="stop-color:#764ba2"/>
-              </linearGradient>
-              <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#f093fb"/>
-                <stop offset="100%" style="stop-color:#f5576c"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <h1 class="brand-name">NoteKeeper</h1>
-      </div>
-      @if (isFirstTimeSetup()) {
-        <p class="brand-tagline">Secure your thoughts, organize your life</p>
-      } @else {
-        <p class="brand-tagline">Welcome back! Enter your master password</p>
-      }
-    </div>
-
     <!-- First Time Setup Form -->
     @if (isFirstTimeSetup()) {
       <div class="login-card setup-card">
         <div class="card-header">
+          <div class="form-brand">
+            <img src="assets/images/logo.png" alt="NoteKeeper logo" class="form-logo" />
+            <h1 class="form-brand-name">NoteKeeper</h1>
+          </div>
           <h2>Welcome to NoteKeeper!</h2>
           <p>Let's set up your secure note-taking environment</p>
         </div>
@@ -56,6 +32,7 @@
                 <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <input
+                class="input"
                 type="text"
                 id="full_name"
                 formControlName="full_name"
@@ -78,6 +55,7 @@
                 <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
               </svg>
               <input
+                class="input"
                 [type]="showNotePassword() ? 'text' : 'password'"
                 id="note_password"
                 formControlName="note_password"
@@ -115,6 +93,7 @@
                 <path d="M7 10V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V10M7 10H17M7 10H6C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <input
+                class="input"
                 [type]="showMasterPassword() ? 'text' : 'password'"
                 id="master_password"
                 formControlName="master_password"
@@ -151,6 +130,7 @@
                 <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <input
+                class="input"
                 type="password"
                 id="confirm_master_password"
                 formControlName="confirm_master_password"
@@ -178,7 +158,7 @@
           <!-- Submit Button -->
           <button
             type="submit"
-            class="login-btn"
+            class="login-btn btn btn-primary"
             [disabled]="isLoading()"
           >
             @if (isLoading()) {
@@ -219,6 +199,10 @@
       <!-- Regular Login Form -->
       <div class="login-card">
         <div class="card-header">
+          <div class="form-brand">
+            <img src="assets/images/logo.png" alt="NoteKeeper logo" class="form-logo" />
+            <h1 class="form-brand-name">NoteKeeper</h1>
+          </div>
           <h2>Welcome Back!</h2>
           <p>Enter your master password to access your notes</p>
         </div>
@@ -232,6 +216,7 @@
                 <path d="M7 10V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V10M7 10H17M7 10H6C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <input
+                class="input"
                 [type]="showMasterPassword() ? 'text' : 'password'"
                 id="login_master_password"
                 formControlName="master_password"
@@ -275,7 +260,7 @@
           <!-- Submit Button -->
           <button
             type="submit"
-            class="login-btn"
+            class="login-btn btn btn-primary"
             [disabled]="isLoading()"
           >
             @if (isLoading()) {
@@ -292,7 +277,7 @@
 
         <!-- Reset Option (for development) -->
         <div class="reset-section">
-          <button class="reset-btn" (click)="resetApp()">
+          <button class="reset-btn btn btn-ghost btn-sm" (click)="resetApp()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C9.61386 21 7.5008 20.1956 5.86932 18.8622M3 12V7M3 12H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>

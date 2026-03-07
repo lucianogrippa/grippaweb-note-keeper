@@ -1,5 +1,5 @@
 <app-navbar></app-navbar>
-<div class="dashboard-container" [class.loaded]="isLoaded()">>
+<div class="dashboard-container" [class.loaded]="isLoaded()">
   <!-- Background Elements -->
   <div class="dashboard-bg">
     <div class="bg-pattern"></div>
@@ -9,39 +9,6 @@
       <div class="element element-3"></div>
     </div>
   </div>
-
-  <!-- Header -->
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="user-greeting">
-        <div class="avatar-container">
-          <div class="avatar-placeholder">
-            {{ currentUser()?.full_name?.charAt(0)?.toUpperCase() }}
-          </div>
-          <div class="status-indicator"></div>
-        </div>
-        <div class="greeting-text">
-          <h1>{{ getGreeting() }}, {{ currentUser()?.full_name }}!</h1>
-          <p>{{ currentTime() | date:'EEEE, MMMM d, y' }}</p>
-        </div>
-      </div>
-      
-      <div class="header-actions">
-        <button class="action-btn create-btn" (click)="showCreateForm.set(true)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 2 4 2H20C21.1046 2 22 2.89543 22 4V19ZM2 7H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          New Category
-        </button>
-        <button class="action-btn logout-btn" (click)="logout()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Logout
-        </button>
-      </div>
-    </div>
-  </header>
 
   <main class="dashboard-main">
     <!-- Categories Section -->
@@ -53,7 +20,7 @@
           </svg>
           My Categories ({{ categories().length }})
         </h2>
-        <button class="action-btn create-btn" (click)="showCreateForm.set(true)">
+        <button class="action-btn create-btn btn btn-primary" (click)="showCreateForm.set(true)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -63,9 +30,10 @@
 
       <!-- Create Category Form -->
       @if (showCreateForm()) {
-        <form class="category-form" (ngSubmit)="createCategory()" #form="ngForm">
+        <form class="category-form card" (ngSubmit)="createCategory()" #form="ngForm">
           <div class="form-group">
             <input
+              class="input"
               type="text"
               [value]="newCategory().name"
               (input)="updateNewCategoryName($event)"
@@ -74,6 +42,7 @@
               required
               #nameInput>
             <textarea
+              class="textarea"
               [value]="newCategory().description"
               (input)="updateNewCategoryDescription($event)"
               name="description"
@@ -90,7 +59,7 @@
       <!-- Categories Grid -->
       <div class="categories-grid">
         @for (category of categories(); track category.id) {
-          <div class="category-card" (click)="viewCategory(category.id)">
+          <div class="category-card card" (click)="viewCategory(category.id)">
             <div class="category-header">
               <h3>{{ category.name }}</h3>
               <div class="category-actions" (click)="$event.stopPropagation()">
@@ -127,7 +96,7 @@
             </div>
             <h3>No categories yet</h3>
             <p>Create your first category to organize your notes!</p>
-            <button class="create-note-btn" (click)="showCreateForm.set(true)">
+            <button class="create-note-btn btn btn-primary" (click)="showCreateForm.set(true)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>

@@ -1,32 +1,79 @@
 @startuml
+title access - sequence diagram
 
-title Add/Edit user - Sequence Diagram 
+actor "User" as user
 
-actor "User" as admin
-participant "User Management Service" as ums
-participant "Database" as db
+participant "Frontend" as frontend
 
-' scenario: Admin adds or edits a user '
-admin -> ums: Request to add/edit user
-ums -> db: Validate user data
-db --> ums: Validation result
-alt Validation successful
-    ums -> db: Save user data
-    db --> ums: Confirmation of save
-    ums --> admin: User added/edited successfully
-else Validation failed
-    ums --> admin: Error message with validation issues
+participant "Credential Service" as credentialService
+
+database "Database" as db #fafafa
+
+== User access to app ==
+
+user -> frontend: open application
+
+frontend -> credentialService: is db exists?
+
+alt "database not exisist" 
+
+credentialService -> frontend: setup_master_password
+
+frontend -> user: show registration form (db path,name,username,password and master password)
+
+user -> frontend: submit form
+
+frontend -> credentialService: validate form
+
+alt "form not valid"
+
+credentialService -> frontend: invalid_form + details
+
+frontend -> user: show errors
+
+user -> frontend: fix errors and submit
+
+frontend -> credentialService: submit valid form 
+
 end
 
-' scenario: Admin cancels the operation '
-admin -> ums: Cancel add/edit user operation
-ums --> admin: Operation cancelled confirmation
+credentialService -> db: create db and create user profile
 
-' scenario: Admin requests user details for editing ' 
-admin -> ums: Request user details for editing
-ums -> db: Fetch user details
-db --> ums: User details
-ums --> admin: Display user details for editing
+end
+
+db -> credentialService: db exists
+
+credentialService --> frontend: sen event ask_master_passord
+
+frontend -> user: show master password form
+
+user -> frontend: submit master password form
+
+frontend -> credentialService: ask for access
+
+alt "wrong master password"
+
+credentialService -> db: try_access
+
+db -> credentialService: wrong_password
+
+credentialService --> frontend: error_wrong_credential
+
+frontend -> user: show error crediantial
+
+end
+
+credentialService -> db: with master password ask user profile
+
+db -> credentialService: retrive user profile
+
+
+
+credentialService -> credentialService: create and store session token
+
+credentialService -> frontend:  send user profile info + token
+
+frontend -> user: navigate to home view
 
 
 @enduml
