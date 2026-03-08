@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, SetupData } from '../../core/auth.service';
+import { isDbExist } from '../../core/api';
 
 @Component({
   selector: 'app-login',
@@ -22,11 +23,11 @@ export class LoginComponent {
   error = signal('');
   showNotePassword = signal(false);
   showMasterPassword = signal(false);
-  
-  // Computed property to check if this is first-time setup
-  isFirstTimeSetup = computed(() => this.authService.isFirstTimeSetup());
+  isFirstTimeSetup = signal(false);
 
   constructor() {
+    this.checkFirstTimeSetup();
+
     // Setup form for first-time installation
     this.setupForm = this.fb.group({
       full_name: ['', [Validators.required, Validators.minLength(2)]],
@@ -41,17 +42,29 @@ export class LoginComponent {
     });
   }
 
+  private async checkFirstTimeSetup(): Promise<void> {
+    try {
+      const dbExists = await isDbExist();
+      const isFirstSetup = !dbExists;
+      this.isFirstTimeSetup.set(isFirstSetup);
+      this.authService.isFirstTimeSetup.set(isFirstSetup);
+    } catch {
+      this.isFirstTimeSetup.set(false);
+      this.authService.isFirstTimeSetup.set(false);
+    }
+  }
+
   onSetupSubmit(): void {
     if (this.setupForm.valid) {
       this.isLoading.set(true);
       this.error.set('');
-      
+
       const setupData: SetupData = {
         full_name: this.setupForm.value.full_name,
         note_password: this.setupForm.value.note_password,
         master_password: this.setupForm.value.master_password
       };
-      
+
       this.authService.setupFirstTime(setupData).subscribe({
         next: (success) => {
           this.isLoading.set(false);
@@ -73,9 +86,9 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.isLoading.set(true);
       this.error.set('');
-      
+
       const masterPassword = this.loginForm.value.master_password;
-      
+
       this.authService.login(masterPassword).subscribe({
         next: (success) => {
           this.isLoading.set(false);
@@ -104,12 +117,12 @@ export class LoginComponent {
   passwordMatchValidator(form: FormGroup) {
     const password = form.get('master_password');
     const confirmPassword = form.get('confirm_master_password');
-    
+
     if (password && confirmPassword && password.value !== confirmPassword.value) {
       confirmPassword.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     }
-    
+
     return null;
   }
 
@@ -123,7 +136,7 @@ export class LoginComponent {
   getFieldError(formName: 'setup' | 'login', fieldName: string): string {
     const form = formName === 'setup' ? this.setupForm : this.loginForm;
     const field = form.get(fieldName);
-    
+
     if (field?.touched && field?.errors) {
       if (field.errors['required']) {
         return `${this.getFieldDisplayName(fieldName)} is required`;
