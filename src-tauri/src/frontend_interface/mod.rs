@@ -80,3 +80,57 @@ pub async fn register(
 
     Ok(())
 }
+
+/**
+ * Logs in a user by connecting to the database with the provided master password. 
+ * This function is called during the login process to establish a connection to the encrypted database and verify that the master password is correct.
+ * It attempts to connect to the database using the master password, and if successful, it returns the database connection pool. 
+ * If the connection fails (e.g., due to an incorrect master password or a corrupted database file), it returns an error indicating the failure to connect to the database. 
+ * This function is essential for ensuring that only users with the correct master password can access the encrypted database and its contents. 
+ * Upon successful login, it also retrieves the encryption key derived from the master password and updates the application state with both the database connection pool and the encryption key for use in subsequent operations.
+ */
+#[tauri::command]
+pub async fn login(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    master_password: String,
+) -> Result<(), String> {
+    if !DBManager::is_db_exist(&app).await.unwrap_or(false) {
+        return Err("Please register first.".to_string());
+    }
+
+    let pool = DBManager::login(&app, &master_password)
+        .await
+        .map_err(|_e| "Invalid Password")?;
+
+    let mut pool_lock = state.pool.write().await;
+    *pool_lock = Some(pool);
+
+    let key: [u8; KeyManager::LEN_ENCRYPTION_KEY] =
+        KeyManager::get_encryption_key(&app, &master_password)
+            .await
+            .map_err(|e| format!("Failed to get encryption key: {}", e))?;
+
+    let mut key_lock = state.encryption_key.write().await;
+    *key_lock = Some(key);
+
+    Ok(())
+}
+
+/**
+ * Logs out the user by closing the database connection pool and clearing the encryption key from the application state.
+ * This function is called when the user chooses to log out of the application, ensuring that any sensitive information (like the database connection and encryption key) is properly cleared from memory.
+ * It first takes the database connection pool from the application state and closes it if it exists, then it clears the encryption key from the state. 
+ * This helps to ensure that after logging out, there are no lingering connections or keys that could potentially be accessed by unauthorized parties.
+ */
+#[tauri::command]
+pub async fn logout(state: State<'_, AppState>) -> Result<(), String> {
+    let pool_to_close = {
+        let mut pool_guard = state.pool.write().await;
+        pool_guard.take()
+    };
+    if let Some(pool) = pool_to_close {
+        pool.close().await;
+    }
+    Ok(())
+}

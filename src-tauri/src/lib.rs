@@ -23,6 +23,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             frontend_interface::is_db_exist,
             frontend_interface::register,
+            frontend_interface::login,
+            frontend_interface::logout,
         ])
         .setup(|app| {
             config::setup(app);
