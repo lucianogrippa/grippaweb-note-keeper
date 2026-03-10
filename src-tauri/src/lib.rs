@@ -1,11 +1,13 @@
-mod db_manager;
-mod credential_service;
-mod frontend_interface;
-mod config;
+mod db;
+mod management;
+mod commands;
+
 use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::RwLock;
 use sqlx::SqlitePool;
+use crate::commands::auth;
+use crate::commands::profile;
 
 // Application state to hold the database connection pool and encryption key
 
@@ -21,22 +23,19 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            frontend_interface::is_db_exist,
-            frontend_interface::register,
-            frontend_interface::login,
-            frontend_interface::logout,
+            auth::is_db_exist,
+            auth::register,
+            auth::login,
+            auth::logout,
+            profile::get_user_profiles,
         ])
         .setup(|app| {
-            config::setup(app);
-
             // manage application state for database connection pool and encryption key
-            tauri::async_runtime::block_on(async move {
-                let state = AppState {
-                    pool: Arc::new(RwLock::new(None)), // Initially, no database connection pool
-                    encryption_key: Arc::new(RwLock::new(None)), // Initially, no encryption key
-                };
-                app.manage(state);
-            });
+            let state = AppState {
+                pool: Arc::new(RwLock::new(None)), // Initially, no database connection pool
+                encryption_key: Arc::new(RwLock::new(None)), // Initially, no encryption key
+            };
+            app.manage(state);
             Ok(())
         })
         //.invoke_handler(tauri::generate_handler![greet])

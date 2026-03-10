@@ -1,4 +1,4 @@
-use crate::credential_service::argon2_key_derivation::KeyManager;
+use crate::management::KeyManager;
 
 use anyhow::{Context, Result};
 

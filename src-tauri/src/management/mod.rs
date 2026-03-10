@@ -37,30 +37,6 @@ impl KeyManager {
     }
 
 
-    // Verify note password by hashing the provided note password with the same key
-    // and comparing it with the stored hex-encoded hash.
-    pub(crate) fn verify_note_password(
-        note_password: &str,
-        key: &[u8; Self::LEN_ENCRYPTION_KEY],
-        stored_hash_hex: &str,
-    ) -> Result<bool> {
-        let computed_hash = Self::hash_note_password(note_password, key)?;
-
-        let stored_hash_bytes = hex::decode(stored_hash_hex)
-            .map_err(|e| anyhow::anyhow!("Invalid stored note hash hex: {}", e))?;
-
-        let stored_hash: [u8; Self::LEN_ENCRYPTION_KEY] = stored_hash_bytes
-            .try_into()
-            .map_err(|_| anyhow::anyhow!("Stored note hash has invalid length"))?;
-
-        Ok(computed_hash == stored_hash)
-    }
-
-    pub async fn is_salt_file_exist(app: &AppHandle) -> Result<bool> {
-        let salt_path = Self::get_salt_file_path(app).await?;
-        Ok(salt_path.exists())
-    }
-
     pub async fn get_salt_file_path(app: &AppHandle) -> Result<PathBuf> {
         let salt_dir = app
             .path()

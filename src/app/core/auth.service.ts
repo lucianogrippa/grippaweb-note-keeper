@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { invoke } from '@tauri-apps/api/core';
+import { BehaviorSubject, Observable, Subscriber } from 'rxjs';
 
 export interface User {
   id: string;
@@ -50,36 +51,52 @@ export class AuthService {
   setupFirstTime(setupData: SetupData): Observable<boolean> {
     return new Observable(observer => {
       // Simulate database setup
-      setTimeout(() => {
+      setTimeout(async () => {
         if (setupData.full_name && setupData.note_password && setupData.master_password) {
-          const user: User = {
-            id: this.generateId(),
-            full_name: setupData.full_name,
-            username: setupData.full_name.toLowerCase().replace(/\s+/g, '') + '@notekeeper.com',
-            note_password: setupData.note_password,
-            master_password: setupData.master_password,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
+          
           
           // Store encrypted passwords (in real app, these would be properly hashed/encrypted)
-          localStorage.setItem('master_password_hash', btoa(setupData.master_password));
-          localStorage.setItem('note_password_hash', btoa(setupData.note_password));
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          localStorage.setItem('app_setup_completed', 'true');
+          // localStorage.setItem('master_password_hash', btoa(setupData.master_password));
+          // localStorage.setItem('note_password_hash', btoa(setupData.note_password));
+          // localStorage.setItem('currentUser', JSON.stringify(user));
+          // localStorage.setItem('app_setup_completed', 'true');
+          invoke("register",{
+            full_name: setupData.full_name,
+            note_password: setupData.note_password,
+            master_password: setupData.master_password
+          }).catch((error) => {
+              observer.next(false);
+              observer.complete();
+          });
           
-          this.setCurrentUser(user);
-          this.isFirstTimeSetup.set(false);
+           this.handleUserProfile(observer);
           
-          observer.next(true);
-          observer.complete();
-          
-          this.router.navigate(['/dashboard']);
         } else {
           observer.next(false);
           observer.complete();
         }
       }, 1500); // Simulate setup time
+    });
+  }
+
+  private handleUserProfile(observer: Subscriber<boolean>) {
+    invoke("get_user_profile").then((profile: any) => {
+      const createdUser = profile;
+      if (createdUser) {
+        this.setCurrentUser(createdUser);
+        this.isFirstTimeSetup.set(false);
+
+        observer.next(true);
+        observer.complete();
+
+        this.router.navigate(['/dashboard']);
+      } else {
+        observer.next(false);
+        observer.complete();
+      }
+    }).catch(() => {
+      observer.next(false);
+      observer.complete();
     });
   }
 

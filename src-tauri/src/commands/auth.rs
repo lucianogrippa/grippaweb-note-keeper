@@ -1,14 +1,9 @@
-/**
- * This module defines the frontend interface for the Tauri application, 
- * providing commands that can be invoked from the frontend to interact with the backend logic. 
- * It includes functions to check if the database exists and to register a new user by creating a database and deriving an encryption key.
- */
 
 use tauri::AppHandle;
-use crate::db_manager::DBManager;
+use crate::db::DBManager;
 use crate::AppState;
 use tauri::State;
-use crate::credential_service::argon2_key_derivation::KeyManager;
+use crate::management::KeyManager;
 
 
 /**

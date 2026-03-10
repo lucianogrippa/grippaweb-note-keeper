@@ -1,6 +1,8 @@
 use std::fs;
 
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
+
+use crate::db::DBManager;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Config {
@@ -32,20 +34,6 @@ impl Config {
     }
 }
 
-pub fn setup(app: &tauri::App) {
-    let _config = Config::new();
-
-    // first check if database exists and if not send event to frontend to permit choose master password and then create db
-
-     match fs::exists(&_config.database_path).unwrap_or_else(|_| false) {
-        true => {
-            println!("Database already exists at path: {}", _config.database_path);
-            app.emit_to(tauri::EventTarget::Any, "ask_master_password", "").ok();
-        },
-        false => {
-            println!("Database does not exist at path: {}", _config.database_path);
-            // send event to frontend to permit choose master password and then create db
-            app.emit_to(tauri::EventTarget::Any, "setup_master_password", "").ok();
-        }
-     }
+pub async fn setup(_app: &tauri::App) {
+    let _ = Config::new();
 }
