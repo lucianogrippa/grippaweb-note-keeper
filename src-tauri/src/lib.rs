@@ -1,6 +1,7 @@
 mod db;
 mod management;
 mod commands;
+mod entities;
 
 use std::sync::Arc;
 use tauri::Manager;
@@ -27,7 +28,7 @@ pub fn run() {
             auth::register,
             auth::login,
             auth::logout,
-            profile::get_user_profiles,
+            profile::get_user_profile,
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key

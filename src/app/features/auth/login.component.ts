@@ -2,8 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, SetupData } from '../../core/auth.service';
+import { AuthService } from '../../core/auth.service';
 import { isDbExist } from '../../core/api';
+import { SetupData } from '../../core/models';
 
 @Component({
   selector: 'app-login',
@@ -126,13 +127,6 @@ export class LoginComponent {
     return null;
   }
 
-  private markFormGroupTouched(form: FormGroup): void {
-    Object.keys(form.controls).forEach(key => {
-      const control = form.get(key);
-      control?.markAsTouched();
-    });
-  }
-
   getFieldError(formName: 'setup' | 'login', fieldName: string): string {
     const form = formName === 'setup' ? this.setupForm : this.loginForm;
     const field = form.get(fieldName);
@@ -151,6 +145,14 @@ export class LoginComponent {
     return '';
   }
 
+
+
+  resetApp(): void {
+    if (confirm('This will reset the entire application and delete all data. Are you sure?')) {
+      this.authService.resetAccount();
+    }
+  }
+
   private getFieldDisplayName(fieldName: string): string {
     const displayNames: { [key: string]: string } = {
       'full_name': 'Full name',
@@ -161,9 +163,11 @@ export class LoginComponent {
     return displayNames[fieldName] || fieldName.replace('_', ' ');
   }
 
-  resetApp(): void {
-    if (confirm('This will reset the entire application and delete all data. Are you sure?')) {
-      this.authService.resetApp();
-    }
+  
+  private markFormGroupTouched(form: FormGroup): void {
+    Object.keys(form.controls).forEach(key => {
+      const control = form.get(key);
+      control?.markAsTouched();
+    });
   }
 }

@@ -7,6 +7,7 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
+use sha2::{Sha256, Digest};
 
 pub struct KeyManager;
 
@@ -18,6 +19,18 @@ impl KeyManager {
     pub const LEN_ENCRYPTION_KEY: usize = 32;
     const SALT_FILE_NAME: &'static str = "salt.bin";
     
+    pub fn hash_password(primary_password: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(primary_password.as_bytes());
+        let result = hasher.finalize();
+        hex::encode(result)
+    }
+
+    pub fn verify_password(input_password: &str, stored_hash: &str) -> bool {
+        let input_hash = Self::hash_password(input_password);
+        input_hash == stored_hash
+    }
+
     pub(crate) fn hash_note_password(note_password: &str, key: &[u8; Self::LEN_ENCRYPTION_KEY]) -> Result<[u8; Self::LEN_ENCRYPTION_KEY]> {
         let params = ParamsBuilder::new()
             .m_cost(Self::MEMORY_COST)
@@ -92,9 +105,14 @@ impl KeyManager {
         app: &AppHandle,
         master_password: &str,
     ) -> Result<[u8; Self::LEN_ENCRYPTION_KEY], anyhow::Error> {
-        let salt = Self::read_salt(app).await?;
+
+        // the master_password is clear so before doing anything with it, we hash it to avoid keeping the clear master password in memory longer than necessary
+        let hash_password = Self::hash_password(master_password);
+
+        let salt: Vec<u8> = Self::read_salt(app).await?;
+        
         let key: [u8; Self::LEN_ENCRYPTION_KEY] =
-            Self::derive_encryption_key(master_password, &salt)?;
+            Self::derive_encryption_key(&hash_password.to_string(), &salt)?;
         Ok(key)
     }
 }

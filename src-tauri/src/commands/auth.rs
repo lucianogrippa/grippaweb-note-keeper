@@ -1,6 +1,6 @@
 
 use tauri::AppHandle;
-use crate::db::DBManager;
+use crate::db::{DBManager, repo_users};
 use crate::AppState;
 use tauri::State;
 use crate::management::KeyManager;
@@ -37,6 +37,8 @@ pub async fn register(
     note_password: String,
     master_password: String
 ) -> Result<(), String> {
+
+    println!("Registering user with full name: {}", full_name);
     if master_password.is_empty() {
         return Err("Password cannot be empty".to_string());
     }
@@ -46,6 +48,7 @@ pub async fn register(
             .await
             .map_err(|e| format!("Could not register: {}", e))?;
     }
+    
 
     let encryption_key_error_handler = KeyManager::get_encryption_key(&app, &master_password)
             .await
@@ -53,15 +56,14 @@ pub async fn register(
         
     let key: [u8; KeyManager::LEN_ENCRYPTION_KEY] = encryption_key_error_handler;
 
-    let note_password_hash = KeyManager::hash_note_password(&note_password, &key)
-        .map_err(|e| format!("Failed to hash note password: {}", e))?;
+    let note_password_hash = KeyManager::hash_password(&note_password);
 
-    let note_password_hash_hex = hex::encode(note_password_hash);
 
-    let pool = DBManager::register(
+
+    let pool = repo_users::register(
         &app,
         &full_name,
-        &note_password_hash_hex,
+        &note_password_hash,
         &master_password
     )
         .await
@@ -94,7 +96,7 @@ pub async fn login(
         return Err("Please register first.".to_string());
     }
 
-    let pool = DBManager::login(&app, &master_password)
+    let pool = repo_users::login(&app, &master_password)
         .await
         .map_err(|_e| "Invalid Password")?;
 
