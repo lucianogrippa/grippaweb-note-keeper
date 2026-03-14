@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { isDbExist } from '../../core/api';
 import { SetupData } from '../../core/models';
+import { Notification } from '../../services/notification';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private notificationService = inject(Notification);
 
   setupForm: FormGroup;
   loginForm: FormGroup;
@@ -71,11 +73,13 @@ export class LoginComponent {
           this.isLoading.set(false);
           if (!success) {
             this.error.set('Setup failed. Please try again.');
+            this.notificationService.showNotification('Setup Failed', 'An error occurred during setup. Please try again.');
           }
         },
         error: (err) => {
           this.isLoading.set(false);
           this.error.set('Setup failed. Please try again.');
+          this.notificationService.showNotification('Setup Failed', 'An error occurred during setup. Please try again.');
         }
       });
     } else {
@@ -91,15 +95,22 @@ export class LoginComponent {
       const masterPassword = this.loginForm.value.master_password;
 
       this.authService.login(masterPassword).subscribe({
-        next: (success) => {
+        next: (result) => {
+          debugger;
           this.isLoading.set(false);
-          if (!success) {
+          if (!result) {
             this.error.set('Invalid master password. Please try again.');
+            this.notificationService.showNotification('Login Failed', 'Invalid master password. Please try again.');
+            return;
           }
+
+          // navigate to home page after successful login
+          this.router.navigate(['/home']);
         },
         error: (err) => {
           this.isLoading.set(false);
           this.error.set('Login failed. Please try again.');
+          this.notificationService.showNotification('Login Failed', err.message || 'An error occurred during login. Please try again.');
         }
       });
     } else {

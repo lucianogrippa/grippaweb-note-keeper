@@ -7,7 +7,8 @@
     "beforeDevCommand": "npm run start",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist/note-keeper/browser"
+    "frontendDist": "../dist/note-keeper/browser",
+    "removeUnusedCommands": true
   },
   "app": {
     "windows": [

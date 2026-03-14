@@ -26,29 +26,6 @@ impl KeyManager {
         hex::encode(result)
     }
 
-    pub fn verify_password(input_password: &str, stored_hash: &str) -> bool {
-        let input_hash = Self::hash_password(input_password);
-        input_hash == stored_hash
-    }
-
-    pub(crate) fn hash_note_password(note_password: &str, key: &[u8; Self::LEN_ENCRYPTION_KEY]) -> Result<[u8; Self::LEN_ENCRYPTION_KEY]> {
-        let params = ParamsBuilder::new()
-            .m_cost(Self::MEMORY_COST)
-            .t_cost(Self::ITERATIONS)
-            .p_cost(Self::PARALLELISM)
-            .build()
-            .map_err(|e| anyhow::anyhow!("Invalid Argon2 params: {}", e))?;
-
-        let argon = Argon2::new(Algorithm::Argon2id, Version::default(), params);
-
-        let mut hash = [0u8; Self::LEN_ENCRYPTION_KEY];
-        argon
-            .hash_password_into(note_password.as_bytes(), &key[..], &mut hash)
-            .map_err(|e| anyhow::anyhow!("Failed to hash note password: {}", e))?;
-
-        Ok(hash)
-    }
-
 
     pub async fn get_salt_file_path(app: &AppHandle) -> Result<PathBuf> {
         let salt_dir = app

@@ -31,7 +31,7 @@ export class AuthService {
     this.currentUser$ = this.currentUserSubject.asObservable();
   }
 
-  checkAuthentication(): boolean {
+  async checkAuthentication(): Promise<boolean> {
     const storedUser = localStorage.getItem(this.CURRENT_USER_KEY);
     const isSessionValid = this.validateSession();
 
@@ -41,9 +41,9 @@ export class AuthService {
       return false;
     }
     
-    if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' && storedUser.trim() !== ''
-      && storedUser.startsWith('{') && storedUser.endsWith('}')) {
-      const user = JSON.parse(atob(storedUser)) as User;
+    const user = this.parseStoredUser(storedUser);
+    const dbUser = await this.loadUserProfile();
+    if (user && dbUser && dbUser.full_name === user.full_name) {
       this.setCurrentUser(user);
       this.isAuthenticated.set(true);
     } else {
@@ -107,9 +107,10 @@ export class AuthService {
   login(masterPassword: string): Observable<boolean> {
     return new Observable(observer => {
 
-
-      invoke("login", { master_password: masterPassword }).then((success) => {
-        if (success) {
+      // login function return string if error occurred or return null if login is successful, so we check if the result is truthy to determine if login failed or not
+      invoke("login", { masterPassword: masterPassword }).then((result) => {
+        debugger;
+        if (result == null) {
           this.loadUserProfile().then((user) => {
             if (user) {
               this.setCurrentUser(user);
@@ -125,6 +126,8 @@ export class AuthService {
           observer.complete();
         }
       }).catch((error) => {
+
+        debugger;
         observer.next(false);
         observer.complete();
       });
@@ -165,11 +168,9 @@ export class AuthService {
 
     const storedUser = localStorage.getItem(this.CURRENT_USER_KEY);
 
-    // validtate user data from local storage before using it
+    const user = this.parseStoredUser(storedUser);
 
-    if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' && storedUser.trim() !== ''
-      && storedUser.startsWith('{') && storedUser.endsWith('}')) {
-      const user = JSON.parse(atob(storedUser)) as User;
+    if (user) {
 
       const dbExists = await isDbExist() as boolean;
 
@@ -221,11 +222,35 @@ export class AuthService {
     const storedUser = localStorage.getItem(this.CURRENT_USER_KEY);
 
     if (await isDbExist() && !!storedUser) {
-      const user = JSON.parse(storedUser);
-      this.setCurrentUser(user);
-      this.isFirstTimeSetup.set(false);
+      const user = this.parseStoredUser(storedUser);
+      if (user) {
+        this.setCurrentUser(user);
+        this.isFirstTimeSetup.set(false);
+      } else {
+        this.isFirstTimeSetup.set(true);
+      }
     } else {
       this.isFirstTimeSetup.set(true);
+    }
+  }
+
+  private parseStoredUser(storedUser: string | null): User | null {
+    if (!storedUser || storedUser === 'null' || storedUser === 'undefined' || storedUser.trim() === '') {
+      return null;
+    }
+
+    // Support both Base64-encoded JSON and plain JSON for backward compatibility.
+    try {
+      const decoded = atob(storedUser);
+      const parsed = JSON.parse(decoded) as User | null;
+      return parsed ?? null;
+    } catch {
+      try {
+        const parsed = JSON.parse(storedUser) as User | null;
+        return parsed ?? null;
+      } catch {
+        return null;
+      }
     }
   }
 
