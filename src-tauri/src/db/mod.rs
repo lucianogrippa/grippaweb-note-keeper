@@ -4,9 +4,7 @@ use crate::management::KeyManager;
 
 use anyhow::{Context, Result};
 
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions}
-};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::{fs, path::PathBuf, str::FromStr};
 use tauri::{AppHandle, Manager as _};
 
@@ -20,7 +18,7 @@ impl DBManager {
 /**
  * The DBManager struct provides methods for managing the application's database, including checking for the existence of the database file, creating and connecting to the database, running migrations, and saving user profile information.
  * It uses SQLx for database interactions and handles encryption using a master password.
- * The DBManager is designed to be used in conjunction with the frontend interface to facilitate user registration and login processes. 
+ * The DBManager is designed to be used in conjunction with the frontend interface to facilitate user registration and login processes.
  * Key functionalities include:
  * - Checking if the database file exists in the application data directory.
  * - Creating the database file and setting up the database schema using migrations.
@@ -29,7 +27,6 @@ impl DBManager {
  * - Deleting the database directory if needed (e.g., during re-registration).
  */
 impl DBManager {
-
     /**
      * Checks if the database file exists in the application data directory.
      * This function is used to determine if the application has been set up with a master password and database.
@@ -104,19 +101,18 @@ impl DBManager {
     }
 
     /**
-     * Connects to the database with encryption using the provided master password. 
+     * Connects to the database with encryption using the provided master password.
      * This function is used during both registration and login processes to establish a connection to the encrypted database.
-    */
+     */
     pub async fn connect_to_database(
         app: &AppHandle,
         db_path: &PathBuf,
         master_password: &str,
-    
     ) -> Result<SqlitePool> {
         let db_uri = db_path.to_str().context("Invalid database path")?;
 
         // hash the master password and use it as the encryption key for the database connection
-        let hashed_password = KeyManager::get_encryption_key(app, master_password).await?; 
+        let hashed_password = KeyManager::get_encryption_key(app, master_password).await?;
 
         let hashed_password_hex = hex::encode(hashed_password);
 
@@ -139,15 +135,14 @@ impl DBManager {
     }
 
     /**
-     * Sets up the database by connecting to it with the provided master password and running any necessary migrations to ensure the database schema is up to date. 
+     * Sets up the database by connecting to it with the provided master password and running any necessary migrations to ensure the database schema is up to date.
      * This function is typically called during the registration process after the database file has been created, and it ensures that the database is properly initialized and ready for use.
      */
     pub async fn setup_database(
         app: &AppHandle,
         db_path: &PathBuf,
-        master_password: &str
+        master_password: &str,
     ) -> Result<SqlitePool> {
-
         let pool = Self::connect_to_database(app, db_path, master_password).await?;
 
         sqlx::migrate!("./migrations")

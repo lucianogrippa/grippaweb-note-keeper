@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { ThemeService, Theme } from '../../core/theme.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { ask, confirm, open } from '@tauri-apps/plugin-dialog';
+import { Notification } from '../../services/notification';
 
 @Component({
   selector: 'app-profile',
@@ -16,23 +18,24 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
   public themeService = inject(ThemeService);
+  private notificationService = inject(Notification);
   private router = inject(Router);
 
   currentUser = computed(() => this.authService.currentUser());
-  
+
   // UI state
   isLoaded = signal(false);
   isEditing = signal(false);
   isSaving = signal(false);
   showPasswordChange = signal(false);
-  
+
   // Form state
   profileForm = signal({
     full_name: '',
     note_password: '',
     master_password: ''
   });
-  
+
   passwordForm = signal({
     current_password: '',
     new_password: '',
@@ -64,71 +67,71 @@ export class ProfileComponent implements OnInit {
 
   updateFullName(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.profileForm.update(current => ({ 
-      ...current, 
-      full_name: target.value 
+    this.profileForm.update(current => ({
+      ...current,
+      full_name: target.value
     }));
   }
 
   updateNotePassword(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.profileForm.update(current => ({ 
-      ...current, 
-      note_password: target.value 
+    this.profileForm.update(current => ({
+      ...current,
+      note_password: target.value
     }));
   }
 
   updateMasterPassword(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.profileForm.update(current => ({ 
-      ...current, 
-      master_password: target.value 
+    this.profileForm.update(current => ({
+      ...current,
+      master_password: target.value
     }));
   }
 
   updateCurrentPassword(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.passwordForm.update(current => ({ 
-      ...current, 
-      current_password: target.value 
+    this.passwordForm.update(current => ({
+      ...current,
+      current_password: target.value
     }));
   }
 
   updateNewPassword(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.passwordForm.update(current => ({ 
-      ...current, 
-      new_password: target.value 
+    this.passwordForm.update(current => ({
+      ...current,
+      new_password: target.value
     }));
   }
 
   updateConfirmPassword(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.passwordForm.update(current => ({ 
-      ...current, 
-      confirm_password: target.value 
+    this.passwordForm.update(current => ({
+      ...current,
+      confirm_password: target.value
     }));
   }
 
   toggleAutoEncrypt(): void {
-    this.settings.update(current => ({ 
-      ...current, 
-      auto_encrypt: !current.auto_encrypt 
+    this.settings.update(current => ({
+      ...current,
+      auto_encrypt: !current.auto_encrypt
     }));
   }
 
   toggleBackupEnabled(): void {
-    this.settings.update(current => ({ 
-      ...current, 
-      backup_enabled: !current.backup_enabled 
+    this.settings.update(current => ({
+      ...current,
+      backup_enabled: !current.backup_enabled
     }));
   }
 
   updateAutoSaveInterval(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    this.settings.update(current => ({ 
-      ...current, 
-      auto_save_interval: parseInt(target.value, 10) 
+    this.settings.update(current => ({
+      ...current,
+      auto_save_interval: parseInt(target.value, 10)
     }));
   }
 
@@ -136,9 +139,9 @@ export class ProfileComponent implements OnInit {
     const target = event.target as HTMLSelectElement;
     const newTheme = target.value as Theme;
     this.themeService.setTheme(newTheme);
-    this.settings.update(current => ({ 
-      ...current, 
-      theme: newTheme 
+    this.settings.update(current => ({
+      ...current,
+      theme: newTheme
     }));
   }
 
@@ -167,7 +170,7 @@ export class ProfileComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    
+
     // Here you would integrate with your auth service to update the profile
     // For now, we'll simulate an API call
     setTimeout(() => {
@@ -179,7 +182,7 @@ export class ProfileComponent implements OnInit {
 
   changePassword(): void {
     const form = this.passwordForm();
-    
+
     if (!form.current_password || !form.new_password || !form.confirm_password) {
       alert('All password fields are required');
       return;
@@ -196,7 +199,7 @@ export class ProfileComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    
+
     // Here you would integrate with your auth service to change password
     setTimeout(() => {
       console.log('Password changed');
@@ -217,7 +220,7 @@ export class ProfileComponent implements OnInit {
       settings: this.settings(),
       export_date: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -229,20 +232,28 @@ export class ProfileComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  logout(): void {
-    if (confirm('Are you sure you want to logout?')) {
+  async logout(): Promise<void> {
+    if (await confirm('Are you sure you want to logout?')) {
       this.authService.logout();
     }
   }
 
-  deleteAccount(): void {
+  async deleteAccount(): Promise<void> {
     const confirmation = prompt('Type "DELETE" to confirm account deletion:');
     if (confirmation === 'DELETE') {
-      const finalConfirmation = confirm('This action cannot be undone. All your data will be permanently deleted. Are you absolutely sure?');
+      const finalConfirmation = await ask('This will reset the entire application and delete all data. Are you sure?', {
+        title: 'Confirm Reset',
+        kind: "warning",
+        okLabel: "Yes",
+        cancelLabel: "No"
+      });
       if (finalConfirmation) {
         // Here you would integrate with your auth service to delete the account
-        console.log('Account deletion requested');
-        alert('Account deletion requested. You will receive a confirmation email.');
+        await this.authService.resetAccount();
+      
+        // after resetting the account, we can show a notification to the user
+        this.notificationService.showNotification('App Reset', 'The application has been reset successfully. Please set up your account again.');
+        window.location.reload();
       }
     }
   }

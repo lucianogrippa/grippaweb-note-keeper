@@ -1,5 +1,5 @@
 use crate::{AppState, db::repo_users::find_user_profile};
-use tauri::State;
+use tauri::{AppHandle, State};
 use anyhow::Result;
 use crate::entities::profiles::UserProfile;
 
@@ -23,3 +23,12 @@ pub async fn get_user_profile(
     
     Ok(user_profile)
 }
+
+#[tauri::command]
+pub async fn reset_app(
+    app: AppHandle,
+) -> Result<(), String> {
+    crate::db::repo_users::reset_app(&app).await.map_err(|e| format!("Failed to reset app: {}", e))?;
+    Ok(())
+}
+

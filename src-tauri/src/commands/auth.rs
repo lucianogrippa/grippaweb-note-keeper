@@ -1,10 +1,8 @@
-
-use tauri::AppHandle;
-use crate::db::{DBManager, repo_users};
-use crate::AppState;
-use tauri::State;
+use crate::db::{repo_users, DBManager};
 use crate::management::KeyManager;
-
+use crate::AppState;
+use tauri::AppHandle;
+use tauri::State;
 
 /**
  * Checks if the database file exists in the application data directory.
@@ -35,9 +33,8 @@ pub async fn register(
     state: State<'_, AppState>,
     full_name: String,
     note_password: String,
-    master_password: String
+    master_password: String,
 ) -> Result<(), String> {
-
     println!("Registering user with full name: {}", full_name);
     if master_password.is_empty() {
         return Err("Password cannot be empty".to_string());
@@ -48,24 +45,16 @@ pub async fn register(
             .await
             .map_err(|e| format!("Could not register: {}", e))?;
     }
-    
 
     let encryption_key_error_handler = KeyManager::get_encryption_key(&app, &master_password)
-            .await
-            .map_err(|e| format!("Invalid password {}", e))?;
-        
+        .await
+        .map_err(|e| format!("Invalid password {}", e))?;
+
     let key: [u8; KeyManager::LEN_ENCRYPTION_KEY] = encryption_key_error_handler;
 
     let note_password_hash = KeyManager::hash_password(&note_password);
 
-
-
-    let pool = repo_users::register(
-        &app,
-        &full_name,
-        &note_password_hash,
-        &master_password
-    )
+    let pool = repo_users::register(&app, &full_name, &note_password_hash, &master_password)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -79,11 +68,11 @@ pub async fn register(
 }
 
 /**
- * Logs in a user by connecting to the database with the provided master password. 
+ * Logs in a user by connecting to the database with the provided master password.
  * This function is called during the login process to establish a connection to the encrypted database and verify that the master password is correct.
- * It attempts to connect to the database using the master password, and if successful, it returns the database connection pool. 
- * If the connection fails (e.g., due to an incorrect master password or a corrupted database file), it returns an error indicating the failure to connect to the database. 
- * This function is essential for ensuring that only users with the correct master password can access the encrypted database and its contents. 
+ * It attempts to connect to the database using the master password, and if successful, it returns the database connection pool.
+ * If the connection fails (e.g., due to an incorrect master password or a corrupted database file), it returns an error indicating the failure to connect to the database.
+ * This function is essential for ensuring that only users with the correct master password can access the encrypted database and its contents.
  * Upon successful login, it also retrieves the encryption key derived from the master password and updates the application state with both the database connection pool and the encryption key for use in subsequent operations.
  */
 #[tauri::command]
@@ -117,7 +106,7 @@ pub async fn login(
 /**
  * Logs out the user by closing the database connection pool and clearing the encryption key from the application state.
  * This function is called when the user chooses to log out of the application, ensuring that any sensitive information (like the database connection and encryption key) is properly cleared from memory.
- * It first takes the database connection pool from the application state and closes it if it exists, then it clears the encryption key from the state. 
+ * It first takes the database connection pool from the application state and closes it if it exists, then it clears the encryption key from the state.
  * This helps to ensure that after logging out, there are no lingering connections or keys that could potentially be accessed by unauthorized parties.
  */
 #[tauri::command]

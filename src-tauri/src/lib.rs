@@ -1,14 +1,14 @@
-mod db;
-mod management;
 mod commands;
+mod db;
 mod entities;
+mod management;
 
+use crate::commands::auth;
+use crate::commands::profile;
+use sqlx::SqlitePool;
 use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::RwLock;
-use sqlx::SqlitePool;
-use crate::commands::auth;
-use crate::commands::profile;
 
 // Application state to hold the database connection pool and encryption key
 
@@ -19,9 +19,8 @@ pub struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    
-    
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
@@ -30,6 +29,7 @@ pub fn run() {
             auth::login,
             auth::logout,
             profile::get_user_profile,
+            profile::reset_app
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key

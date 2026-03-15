@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { invoke } from '@tauri-apps/api/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { getUserProfile, isDbExist, logout } from './api';
+import { deleteUserProfile, getUserProfile, isDbExist, logout, resetSession as resetApp } from './api';
 import { SetupData, User } from './models';
 
 
@@ -109,7 +109,6 @@ export class AuthService {
 
       // login function return string if error occurred or return null if login is successful, so we check if the result is truthy to determine if login failed or not
       invoke("login", { masterPassword: masterPassword }).then((result) => {
-        debugger;
         if (result == null) {
           this.loadUserProfile().then((user) => {
             if (user) {
@@ -126,8 +125,6 @@ export class AuthService {
           observer.complete();
         }
       }).catch((error) => {
-
-        debugger;
         observer.next(false);
         observer.complete();
       });
@@ -155,8 +152,9 @@ export class AuthService {
   }
 
   async resetAccount() {
-    this.resetSession();
-
+    await resetApp();
+    await this.resetSession();
+    
     // TODO: Reset db and all user data through Tauri command
   }
 

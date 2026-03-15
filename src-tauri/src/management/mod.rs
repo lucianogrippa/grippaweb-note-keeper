@@ -1,13 +1,10 @@
 use anyhow::{Context, Result};
-use argon2::{
-    self,
-    Algorithm, Argon2, ParamsBuilder, Version,
-};
+use argon2::{self, Algorithm, Argon2, ParamsBuilder, Version};
 use rand::rngs::OsRng;
 use rand::RngCore;
+use sha2::{Digest, Sha256};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
-use sha2::{Sha256, Digest};
 
 pub struct KeyManager;
 
@@ -18,14 +15,13 @@ impl KeyManager {
     pub const LEN_SALT: usize = 16;
     pub const LEN_ENCRYPTION_KEY: usize = 32;
     const SALT_FILE_NAME: &'static str = "salt.bin";
-    
+
     pub fn hash_password(primary_password: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(primary_password.as_bytes());
         let result = hasher.finalize();
         hex::encode(result)
     }
-
 
     pub async fn get_salt_file_path(app: &AppHandle) -> Result<PathBuf> {
         let salt_dir = app
@@ -42,7 +38,7 @@ impl KeyManager {
         match fs::read(&salt_path) {
             Ok(salt) => Ok(salt),
             Err(_) => {
-                let salt= Self::create_salt(app).await?;
+                let salt = Self::create_salt(app).await?;
                 Ok(salt)
             }
         }
@@ -50,8 +46,7 @@ impl KeyManager {
 
     async fn create_salt(app: &AppHandle) -> Result<Vec<u8>> {
         let mut salt = vec![0u8; Self::LEN_SALT];
-        OsRng
-            .fill_bytes(&mut salt);
+        OsRng.fill_bytes(&mut salt);
         let salt_path = Self::get_salt_file_path(app).await?;
         fs::write(&salt_path, &salt).context("Failed to write salt to file")?;
         Ok(salt)
@@ -82,12 +77,11 @@ impl KeyManager {
         app: &AppHandle,
         master_password: &str,
     ) -> Result<[u8; Self::LEN_ENCRYPTION_KEY], anyhow::Error> {
-
         // the master_password is clear so before doing anything with it, we hash it to avoid keeping the clear master password in memory longer than necessary
         let hash_password = Self::hash_password(master_password);
 
         let salt: Vec<u8> = Self::read_salt(app).await?;
-        
+
         let key: [u8; Self::LEN_ENCRYPTION_KEY] =
             Self::derive_encryption_key(&hash_password.to_string(), &salt)?;
         Ok(key)

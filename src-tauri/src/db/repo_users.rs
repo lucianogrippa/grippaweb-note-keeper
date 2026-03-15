@@ -2,9 +2,9 @@ use crate::db::DBManager;
 
 use anyhow::{Context, Result};
 
+use crate::entities::profiles::UserProfile;
 use sqlx::sqlite::SqlitePool;
 use tauri::AppHandle;
-use crate::entities::profiles::UserProfile;
 
 /**
  * Registers a new user by creating a database and setting up the master password and note password.
@@ -13,7 +13,7 @@ pub async fn register(
     app: &AppHandle,
     full_name: &str,
     password_hash_note: &str,
-    master_password: &str, // is clear 
+    master_password: &str, // is clear
 ) -> Result<SqlitePool, anyhow::Error> {
     if full_name.is_empty() {
         return Err(anyhow::anyhow!("Full name cannot be empty"));
@@ -34,7 +34,7 @@ pub async fn register(
     }
 
     let db_path = DBManager::create_db_file(app).await?;
-    let pool = DBManager::setup_database(app,&db_path, master_password).await?;
+    let pool = DBManager::setup_database(app, &db_path, master_password).await?;
 
     // if the database was creadted successfully , insert the profile information into the database
     save_user_profile(full_name, password_hash_note, &pool).await?;
@@ -118,4 +118,10 @@ pub async fn find_user_profile(
         .context("Failed to query user profile from database")?;
 
     Ok(profile)
+}
+
+pub(crate) async fn reset_app(app: &AppHandle) -> Result<(), anyhow::Error> {
+    // delete entire database file to reset the app
+    DBManager::delete_db_directory(app).await.context("Failed to delete database directory during app reset")?;
+    Ok(())
 }

@@ -6,6 +6,8 @@ import { AuthService } from '../../core/auth.service';
 import { isDbExist } from '../../core/api';
 import { SetupData } from '../../core/models';
 import { Notification } from '../../services/notification';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -68,20 +70,24 @@ export class LoginComponent {
         master_password: this.setupForm.value.master_password
       };
 
-      this.authService.setupFirstTime(setupData).subscribe({
-        next: (success) => {
-          this.isLoading.set(false);
-          if (!success) {
+      this.authService.setupFirstTime(setupData)
+        .pipe(finalize(() => this.isLoading.set(false)))
+        .subscribe({
+          next: (success) => {
+            this.isLoading.set(false);
+            if (!success) {
+              this.error.set('Setup failed. Please try again.');
+              this.notificationService.showNotification('Setup Failed', 'An error occurred during setup. Please try again.');
+            }
+            // navigate to home page after successful setup
+            this.performLogin(setupData.master_password);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
             this.error.set('Setup failed. Please try again.');
             this.notificationService.showNotification('Setup Failed', 'An error occurred during setup. Please try again.');
           }
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.error.set('Setup failed. Please try again.');
-          this.notificationService.showNotification('Setup Failed', 'An error occurred during setup. Please try again.');
-        }
-      });
+        });
     } else {
       this.markFormGroupTouched(this.setupForm);
     }
@@ -94,29 +100,12 @@ export class LoginComponent {
 
       const masterPassword = this.loginForm.value.master_password;
 
-      this.authService.login(masterPassword).subscribe({
-        next: (result) => {
-          debugger;
-          this.isLoading.set(false);
-          if (!result) {
-            this.error.set('Invalid master password. Please try again.');
-            this.notificationService.showNotification('Login Failed', 'Invalid master password. Please try again.');
-            return;
-          }
-
-          // navigate to home page after successful login
-          this.router.navigate(['/home']);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.error.set('Login failed. Please try again.');
-          this.notificationService.showNotification('Login Failed', err.message || 'An error occurred during login. Please try again.');
-        }
-      });
+      this.performLogin(masterPassword);
     } else {
       this.markFormGroupTouched(this.loginForm);
     }
   }
+
 
   toggleNotePasswordVisibility(): void {
     this.showNotePassword.set(!this.showNotePassword());
@@ -158,9 +147,19 @@ export class LoginComponent {
 
 
 
-  resetApp(): void {
-    if (confirm('This will reset the entire application and delete all data. Are you sure?')) {
-      this.authService.resetAccount();
+  async resetApp(): Promise<void> {
+    const userConfirmed = await ask('This will reset the entire application and delete all data. Are you sure?', {
+      title: 'Confirm Reset',
+      kind: "warning",
+      okLabel: "Yes",
+      cancelLabel: "No"
+    });
+
+    if (userConfirmed) {
+      await this.authService.resetAccount();
+      // after resetting the account, we can show a notification to the user
+      this.notificationService.showNotification('App Reset', 'The application has been reset successfully. Please set up your account again.');
+      window.location.reload();
     }
   }
 
@@ -174,11 +173,35 @@ export class LoginComponent {
     return displayNames[fieldName] || fieldName.replace('_', ' ');
   }
 
-  
+
   private markFormGroupTouched(form: FormGroup): void {
     Object.keys(form.controls).forEach(key => {
       const control = form.get(key);
       control?.markAsTouched();
     });
   }
+  private performLogin(masterPassword: any) {
+    this.isLoading.set(true);
+    this.error.set('');
+    this.authService.login(masterPassword).subscribe({
+      next: (result) => {
+
+        this.isLoading.set(false);
+        if (!result) {
+          this.error.set('Invalid master password. Please try again.');
+          this.notificationService.showNotification('Login Failed', 'Invalid master password. Please try again.');
+          return;
+        }
+
+        // navigate to home page after successful login
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.error.set('Login failed. Please try again.');
+        this.notificationService.showNotification('Login Failed', err.message || 'An error occurred during login. Please try again.');
+      }
+    });
+  }
+
 }
