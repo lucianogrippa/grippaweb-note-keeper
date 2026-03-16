@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { invoke } from '@tauri-apps/api/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { deleteUserProfile, getUserProfile, isDbExist, logout, resetSession as resetApp } from './api';
+import { deleteUserProfile, getUserProfile, isDbExist, logout, resetSession as resetApp } from './api/profiles';
 import { SetupData, User } from './models';
 
 

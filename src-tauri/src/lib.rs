@@ -5,6 +5,7 @@ mod management;
 
 use crate::commands::auth;
 use crate::commands::profile;
+use crate::commands::categories;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use tauri::Manager;
@@ -29,7 +30,9 @@ pub fn run() {
             auth::login,
             auth::logout,
             profile::get_user_profile,
-            profile::reset_app
+            profile::reset_app,
+            categories::get_categories_by_user,
+            categories::add_category,
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
-import { isDbExist } from '../../core/api';
+import { isDbExist } from '../../core/api/profiles';
 import { SetupData } from '../../core/models';
 import { Notification } from '../../services/notification';
 import { ask } from '@tauri-apps/plugin-dialog';

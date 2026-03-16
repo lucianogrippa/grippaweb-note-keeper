@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { User } from "./models";
+import { User } from "../models";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export async function isDbExist(): Promise<boolean> {

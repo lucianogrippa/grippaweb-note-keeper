@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
 import { from, map, Observable } from 'rxjs';
-import { getUserProfile } from './api';
+import { getUserProfile } from './api/profiles';
 import { User } from './models';
 
 @Injectable({
