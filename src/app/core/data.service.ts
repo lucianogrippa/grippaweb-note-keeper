@@ -1,8 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AuthService } from './auth.service';
+import { User } from './models';
+import { addCategory, deleteCategoryById, editCategory, findCategoryById, getCategoriesByUser } from './api/categories';
 
 export interface Category {
-  id: string;
+  id?: string;
   user_id: string;
   name: string;
   description?: string;
@@ -11,7 +14,7 @@ export interface Category {
 }
 
 export interface Group {
-  id: string;
+  id?: string;
   categories_id: string;
   name: string;
   description?: string;
@@ -20,7 +23,7 @@ export interface Group {
 }
 
 export interface Note {
-  id: string;
+  id?: string;
   groups_id: string;
   title: string;
   content: string;
@@ -36,6 +39,7 @@ export class DataService {
   private categoriesSubject = new BehaviorSubject<Category[]>([]);
   private groupsSubject = new BehaviorSubject<Group[]>([]);
   private notesSubject = new BehaviorSubject<Note[]>([]);
+  private readonly authService = inject(AuthService);
 
   categories$ = this.categoriesSubject.asObservable();
   groups$ = this.groupsSubject.asObservable();
@@ -46,99 +50,22 @@ export class DataService {
   groups = signal<Group[]>([]);
   notes = signal<Note[]>([]);
 
+  currentUser = signal(this.authService.currentUser() as User | null);
+  
   constructor() {
-    this.initializeMockData();
+    this.loadCategories();
   }
 
-  private generateId(): string {
-    return Math.random().toString(36).substr(2, 16);
-  }
+  async loadCategories(): Promise<void> {
+   
+    const user = this.authService.currentUser();
 
-  private initializeMockData(): void {
-    const userId = 'user-1';
-    const mockCategories: Category[] = [
-      {
-        id: 'cat-1',
-        user_id: userId,
-        name: 'Bank',
-        description: 'Banking and financial information',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'cat-2',
-        user_id: userId,
-        name: 'TV Subscriptions',
-        description: 'Streaming services and entertainment',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'cat-3',
-        user_id: userId,
-        name: 'Cloud',
-        description: 'Cloud services and storage',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'cat-4',
-        user_id: userId,
-        name: 'Work',
-        description: 'Work-related notes and information',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    const mockGroups: Group[] = [
-      { id: 'grp-1', categories_id: 'cat-1', name: 'Credit Cards', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-2', categories_id: 'cat-1', name: 'Savings Account', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-3', categories_id: 'cat-2', name: 'Netflix', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-4', categories_id: 'cat-2', name: 'Prime Video', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-5', categories_id: 'cat-2', name: 'Disney+', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-6', categories_id: 'cat-3', name: 'Google Drive', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-7', categories_id: 'cat-3', name: 'Dropbox', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: 'grp-8', categories_id: 'cat-4', name: 'Meeting Notes', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-    ];
-
-    const mockNotes: Note[] = [
-      {
-        id: 'note-1',
-        groups_id: 'grp-1',
-        title: 'Visa Card Info',
-        content: 'Card number: **** **** **** 1234\\nExpiry: 12/25\\nCVV: ***',
-        is_encrypted: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'note-2',
-        groups_id: 'grp-3',
-        title: 'Netflix Login',
-        content: 'Email: user@example.com\\nPassword: ********\\nProfiles: Family, Kids',
-        is_encrypted: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'note-3',
-        groups_id: 'grp-8',
-        title: 'Project Planning Meeting',
-        content: 'Discussed Q1 goals and timeline. Next meeting on Friday.',
-        is_encrypted: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    this.categories.set(mockCategories);
-    this.groups.set(mockGroups);
-    this.notes.set(mockNotes);
-    
-    this.categoriesSubject.next(mockCategories);
-    this.groupsSubject.next(mockGroups);
-    this.notesSubject.next(mockNotes);
+    if (user) {
+      // Load categories for the current user
+      const userCategories = await getCategoriesByUser(user.id);
+      this.categories.set(userCategories);
+      this.categoriesSubject.next(userCategories);
+    }
   }
 
   // Categories CRUD
@@ -153,71 +80,106 @@ export class DataService {
   createCategory(name: string, description?: string): Observable<Category> {
     return new Observable(observer => {
       const newCategory: Category = {
-        id: this.generateId(),
-        user_id: 'user-1', // Should come from auth service
+        user_id: this.currentUser()?.id || '',
         name,
         description,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      const updatedCategories = [...this.categories(), newCategory];
-      this.categories.set(updatedCategories);
-      this.categoriesSubject.next(updatedCategories);
-      
-      observer.next(newCategory);
-      observer.complete();
+      addCategory(this.currentUser()?.id || 'user-1', name, description || '')
+      .then(() => {
+        getCategoriesByUser(this.currentUser()?.id || 'user-1')        .then(categories => {
+          this.categories.set(categories);
+          this.categoriesSubject.next(categories);
+          
+          observer.next(newCategory);
+          observer.complete();
+        })
+        .catch(error => {
+          console.error('Error loading categories after creation:', error);
+          observer.error(error);
+        });
+      }).catch(error => {
+        console.error('Error creating category:', error);
+        observer.error(error);
+      });
     });
   }
 
   updateCategory(id: string, name: string, description?: string): Observable<Category> {
     return new Observable(observer => {
       const categories = this.categories();
-      const index = categories.findIndex(cat => cat.id === id);
-      
-      if (index !== -1) {
-        const updatedCategory = {
-          ...categories[index],
-          name,
-          description,
-          updated_at: new Date().toISOString()
-        };
-        
-        const updatedCategories = [...categories];
-        updatedCategories[index] = updatedCategory;
-        
-        this.categories.set(updatedCategories);
-        this.categoriesSubject.next(updatedCategories);
-        
-        observer.next(updatedCategory);
-      } else {
-        observer.error('Category not found');
-      }
-      observer.complete();
+
+      findCategoryById(id)
+        .then(category => {
+          if (!category) {
+            observer.error('Category not found');
+            observer.complete();
+            return;
+          }
+
+          // Update category in the backend
+          editCategory(id, name, description || '')
+            .then(() => {
+              // After successful update, refresh categories from backend
+              getCategoriesByUser(this.currentUser()?.id || 'user-1')
+                .then(categories => {
+                  this.categories.set(categories);
+                  this.categoriesSubject.next(categories);
+                  
+                  const updatedCategory = categories.find(cat => cat.id === id);
+                  if (updatedCategory) {
+                    observer.next(updatedCategory);
+                  } else {
+                    observer.error('Updated category not found after refresh');
+                  }
+                  observer.complete();
+                } )
+                .catch(error => {
+                  console.error('Error loading categories after update:', error);
+                  observer.error(error);
+                  observer.complete();
+                });
+            })
+            .catch(error => {
+              console.error('Error updating category:', error);
+              observer.error(error);
+              observer.complete();
+            });
+        })
+        .catch(error => {
+          console.error('Error finding category for update:', error);
+          observer.error(error);
+          observer.complete();
+        });
     });
   }
 
   deleteCategory(id: string): Observable<boolean> {
     return new Observable(observer => {
-      // Also delete associated groups and notes
-      const groupsToDelete = this.groups().filter(g => g.categories_id === id);
-      groupsToDelete.forEach(group => {
-        const notesToDelete = this.notes().filter(n => n.groups_id === group.id);
-        const updatedNotes = this.notes().filter(n => !notesToDelete.includes(n));
-        this.notes.set(updatedNotes);
-        this.notesSubject.next(updatedNotes);
+      deleteCategoryById(id)
+      .then(() => {
+        getCategoriesByUser(this.currentUser()?.id || 'user-1')
+          .then(categories => {
+            this.categories.set(categories);
+            this.categoriesSubject.next(categories);
+          })
+          .then(() => {
+            observer.next(true);
+            observer.complete();
+          })
+          .catch(error => {
+            console.error('Error loading categories after deletion:', error);
+            observer.error(error);
+            observer.complete();
+          });
+      })
+      .catch(error => {
+        console.error('Error deleting category:', error);
+        observer.error(error);
+        observer.complete();
       });
-
-      const updatedGroups = this.groups().filter(g => g.categories_id !== id);
-      this.groups.set(updatedGroups);
-      this.groupsSubject.next(updatedGroups);
-
-      const updatedCategories = this.categories().filter(cat => cat.id !== id);
-      this.categories.set(updatedCategories);
-      this.categoriesSubject.next(updatedCategories);
-      
-      observer.next(true);
-      observer.complete();
     });
   }
 
@@ -233,7 +195,6 @@ export class DataService {
   createGroup(categoryId: string, name: string): Observable<Group> {
     return new Observable(observer => {
       const newGroup: Group = {
-        id: this.generateId(),
         categories_id: categoryId,
         name,
         created_at: new Date().toISOString(),
@@ -303,7 +264,6 @@ export class DataService {
   createNote(groupId: string, title: string, content: string, isEncrypted: boolean = false): Observable<Note> {
     return new Observable(observer => {
       const newNote: Note = {
-        id: this.generateId(),
         groups_id: groupId,
         title,
         content,

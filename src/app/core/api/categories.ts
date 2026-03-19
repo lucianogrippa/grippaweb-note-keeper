@@ -22,3 +22,41 @@ export async function addCategory(userId: string, name: string, description: str
         return Promise.reject(error);
     }
 }
+
+export async function editCategory(categoryId: string, name: string, description: string): Promise<void> {
+    try {
+        await invoke("edit_category", { categoryId, name, description });
+    } catch (error: any) {
+        console.error('Error editing category:', error);
+        return Promise.reject(error);
+    }
+  }
+
+export async function findCategoryById(categoryId: string): Promise<Category | null> {
+    try {
+        const category = await invoke<Category>("find_category_by_id", { categoryId });
+        return category || null;
+    } catch (error: any) {
+        console.error('Error finding category:', error);
+        return null;
+    }
+}
+
+export async function searchCategories(userId: string, query: string): Promise<Category[]> {
+    try {
+        const categories = await invoke<Category[]>("search_categories", { userId, query });
+        return categories || [];
+    } catch (error: any) {
+        console.error('Error searching categories:', error);
+        return [];
+    }
+}
+
+export async function deleteCategoryById(categoryId: string): Promise<void> {
+    try {
+        await invoke("delete_category_by_id", { categoryId });
+    } catch (error: any) {
+        console.error('Error deleting category:', error);
+        return Promise.reject(error);
+    }
+}

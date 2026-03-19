@@ -66,7 +66,7 @@ export class DashboardComponent implements OnInit {
     const groupCount = this.dataService.getGroupsByCategory(categoryId).length;
     const groups = this.dataService.getGroupsByCategory(categoryId);
     const noteCount = groups.reduce((total, group) => {
-      return total + this.dataService.getNotesByGroup(group.id).length;
+      return total + this.dataService.getNotesByGroup(group.id || '').length;
     }, 0);
     
     return { groupCount, noteCount };
@@ -112,7 +112,7 @@ export class DashboardComponent implements OnInit {
   }
 
   editCategory(category: Category): void {
-    this.isEditingCategory.set(category.id);
+    this.isEditingCategory.set(category.id || null);
     this.editCategoryName.set(category.name);
     this.editCategoryDescription.set(category.description || '');
   }

@@ -17,18 +17,6 @@ pub async fn get_categories_by_user_id(
     Ok(categories)
 }
 
-pub async fn list_categories(
-    pool: &sqlx::Pool<sqlx::Sqlite>,
-) -> Result<Vec<Category>, anyhow::Error> {
-    let categories = sqlx::query_as::<_, Category>(
-        "SELECT id, user_id, name, description, created_at, updated_at FROM categories ORDER BY name ASC",
-    )
-    .fetch_all(pool)
-    .await
-    .context("Failed to retrieve categories from database")?;
-
-    Ok(categories)
-}
 
 pub async fn find_by_name_or_description(
     user_id: &str,

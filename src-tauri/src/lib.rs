@@ -33,6 +33,10 @@ pub fn run() {
             profile::reset_app,
             categories::get_categories_by_user,
             categories::add_category,
+            categories::update_category,
+            categories::find_category_by_id,
+            categories::search_categories,
+            categories::delete_category_by_id,
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key

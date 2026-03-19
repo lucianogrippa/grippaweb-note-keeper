@@ -111,7 +111,7 @@ export class CategoryDetailComponent implements OnInit {
   }
 
   editGroup(group: Group): void {
-    this.isEditingGroup.set(group.id);
+    this.isEditingGroup.set(group.id || null);
     this.editGroupName.set(group.name);
     this.editGroupDescription.set(group.description || '');
   }
