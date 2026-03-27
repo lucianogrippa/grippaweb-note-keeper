@@ -6,6 +6,7 @@ mod management;
 use crate::commands::auth;
 use crate::commands::profile;
 use crate::commands::categories;
+use crate::commands::groups;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use tauri::Manager;
@@ -37,6 +38,11 @@ pub fn run() {
             categories::find_category_by_id,
             categories::search_categories,
             categories::delete_category_by_id,
+            groups::get_groups_by_category,
+            groups::find_group_by_id,
+            groups::add_group_in_category,
+            groups::edit_group,
+            groups::delete_group,
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key

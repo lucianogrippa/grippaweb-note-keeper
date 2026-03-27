@@ -1,8 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, from, Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { User } from './models';
 import { addCategory, deleteCategoryById, editCategory, findCategoryById, getCategoriesByUser } from './api/categories';
+import { createGroup, deleteGroup, loadGroupsByCategory, updateGroup } from './api/groups';
 
 export interface Category {
   id?: string;
@@ -36,6 +37,7 @@ export interface Note {
   providedIn: 'root'
 })
 export class DataService {
+
   private categoriesSubject = new BehaviorSubject<Category[]>([]);
   private groupsSubject = new BehaviorSubject<Group[]>([]);
   private notesSubject = new BehaviorSubject<Note[]>([]);
@@ -67,6 +69,14 @@ export class DataService {
       this.categoriesSubject.next(userCategories);
     }
   }
+
+    loadGroups(id: string): Observable<Group[]> {
+      return from(loadGroupsByCategory(id).then(groups => {
+        this.groups.set(groups);
+        this.groupsSubject.next(groups);
+        return groups;
+      }));
+    }
 
   // Categories CRUD
   getCategories(): Category[] {
@@ -193,63 +203,83 @@ export class DataService {
   }
 
   createGroup(categoryId: string, name: string): Observable<Group> {
-    return new Observable(observer => {
-      const newGroup: Group = {
-        categories_id: categoryId,
-        name,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      const updatedGroups = [...this.groups(), newGroup];
-      this.groups.set(updatedGroups);
-      this.groupsSubject.next(updatedGroups);
-      
-      observer.next(newGroup);
-      observer.complete();
-    });
-  }
+    return from(createGroup({ name, categories_id: categoryId }))
+    .pipe(
+      switchMap(()=>loadGroupsByCategory(categoryId)),
+      switchMap(groups => {
+        this.groups.set(groups);
+        this.groupsSubject.next(groups);
+        const createdGroup = groups.find(g => g.name === name);
+        if (createdGroup) {
+          return new Observable<Group>(observer => {
+            observer.next(createdGroup);
+            observer.complete();
+          });
+        } else {
+          return new Observable<Group>(observer => {
+            observer.error('Created group not found after refresh');
+            observer.complete();
+          });
+        }
+      }));
+     } 
 
   updateGroup(id: string, name: string): Observable<Group> {
-    return new Observable(observer => {
-      const groups = this.groups();
-      const index = groups.findIndex(group => group.id === id);
-      
-      if (index !== -1) {
-        const updatedGroup = {
-          ...groups[index],
-          name,
-          updated_at: new Date().toISOString()
-        };
-        
-        const updatedGroups = [...groups];
-        updatedGroups[index] = updatedGroup;
-        
-        this.groups.set(updatedGroups);
-        this.groupsSubject.next(updatedGroups);
-        
-        observer.next(updatedGroup);
-      } else {
-        observer.error('Group not found');
-      }
-      observer.complete();
-    });
+    return from(updateGroup({id, name} as Group))
+    .pipe(
+      switchMap(() => {
+        const group = this.getGroupById(id);
+        if (group) {
+          return loadGroupsByCategory(group.categories_id);
+        } else {
+          return new Observable<Group[]>(observer => {
+            observer.error('Group not found for update');
+            observer.complete();
+          });
+        }
+      }),
+      switchMap(groups => {
+        this.groups.set(groups);
+        this.groupsSubject.next(groups);
+        const updatedGroup = groups.find(g => g.id === id);
+        if (updatedGroup) {
+          return new Observable<Group>(observer => {
+            observer.next(updatedGroup);
+            observer.complete();
+          });
+        } else {
+          return new Observable<Group>(observer => {
+            observer.error('Updated group not found after refresh');
+            observer.complete();
+          });
+        }
+      })
+    );
   }
 
   deleteGroup(id: string): Observable<boolean> {
-    return new Observable(observer => {
-      // Delete associated notes
-      const updatedNotes = this.notes().filter(note => note.groups_id !== id);
-      this.notes.set(updatedNotes);
-      this.notesSubject.next(updatedNotes);
-
-      const updatedGroups = this.groups().filter(group => group.id !== id);
-      this.groups.set(updatedGroups);
-      this.groupsSubject.next(updatedGroups);
-      
-      observer.next(true);
-      observer.complete();
-    });
+    return from(deleteGroup(id))
+    .pipe(
+      switchMap(() => {
+        const group = this.getGroupById(id);
+        if (group) {
+          return loadGroupsByCategory(group.categories_id);
+        } else {
+          return new Observable<Group[]>(observer => {
+            observer.error('Group not found for deletion');
+            observer.complete();
+          });
+        }
+      }),
+      switchMap(groups => {
+        this.groups.set(groups);
+        this.groupsSubject.next(groups);
+        return new Observable<boolean>(observer => {
+          observer.next(true);
+          observer.complete();
+        });
+      })
+    );
   }
 
   // Notes CRUD

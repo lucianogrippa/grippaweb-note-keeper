@@ -1,5 +1,7 @@
 pub mod repo_users;
 pub mod repo_categories;
+pub mod repo_groups;
+pub mod repo_notes;
 
 use crate::management::KeyManager;
 

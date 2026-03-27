@@ -12,14 +12,36 @@
       "isBackground": true,
       // change this to your `beforeDevCommand`:
       "command": "npm",
-      "args": ["run", "tauri", "dev"]
+      "args": ["run", "tauri", "dev"],
+      "problemMatcher": [
+        {
+          "owner": "typescript",
+          "pattern": "$tsc",
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Dev command started.*$",
+            "endsPattern": "^.*Dev command ended.*$"
+          }
+        }
+      ]
     },
     {
       "label": "ui:build",
       "type": "shell",
       // change this to your `beforeBuildCommand`:
       "command": "npm",
-      "args": ["run", "tauri", "build"]
+      "args": ["run", "tauri", "build"],
+      "problemMatcher": [
+        {
+          "owner": "typescript",
+          "pattern": "$tsc",
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Build command started.*$",
+            "endsPattern": "^.*Build command ended.*$"
+          }
+        }
+      ]
     }
   ]
 }

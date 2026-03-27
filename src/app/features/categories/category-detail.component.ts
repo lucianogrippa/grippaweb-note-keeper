@@ -47,6 +47,15 @@ export class CategoryDetailComponent implements OnInit {
       const id = params.get('id');
       if (id) {
         this.categoryId.set(id);
+        this.dataService.loadGroups(id).subscribe({
+          next: () => {
+            // Groups loaded successfully
+            this.isLoaded.set(true);
+          },
+          error: (error) => {
+            console.error('Error loading groups:', error);
+          }
+        });
       }
     });
 

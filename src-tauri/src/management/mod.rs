@@ -1,3 +1,4 @@
+use aes_gcm::{KeyInit, aead::Aead};
 use anyhow::{Context, Result};
 use argon2::{self, Algorithm, Argon2, ParamsBuilder, Version};
 use rand::rngs::OsRng;
@@ -7,6 +8,7 @@ use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
 pub struct KeyManager;
+pub struct NoteManager;
 
 impl KeyManager {
     const MEMORY_COST: u32 = 19 * 1024; // ~19MB
@@ -85,5 +87,43 @@ impl KeyManager {
         let key: [u8; Self::LEN_ENCRYPTION_KEY] =
             Self::derive_encryption_key(&hash_password.to_string(), &salt)?;
         Ok(key)
+    }
+}
+
+impl NoteManager {
+    pub fn encrypt_content(content: &str, key: &[u8]) -> Result<String, anyhow::Error> {
+        let cipher = aes_gcm::Aes256Gcm::new_from_slice(key)
+            .map_err(|e| anyhow::anyhow!("Failed to create cipher: {}", e))?;
+
+        let mut nonce_bytes = [0u8; 12];
+        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce = aes_gcm::Nonce::from_slice(&nonce_bytes);
+
+        let ciphertext = cipher
+            .encrypt(nonce, content.as_bytes())
+            .map_err(|e| anyhow::anyhow!("Encryption failed: {}", e))?;
+
+        Ok(hex::encode(ciphertext))
+    }
+
+    pub fn decrypt_content(encrypted_content: &str, key: &[u8]) -> Result<String, anyhow::Error> {
+        let cipher = aes_gcm::Aes256Gcm::new_from_slice(key)
+            .map_err(|e| anyhow::anyhow!("Failed to create cipher: {}", e))?;
+
+        let mut nonce_bytes = [0u8; 12];
+        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce = aes_gcm::Nonce::from_slice(&nonce_bytes);
+        
+        let ciphertext = hex::decode(encrypted_content)
+            .map_err(|e| anyhow::anyhow!("Failed to decode encrypted content: {}", e))?;
+
+        let decrypted_bytes = cipher
+            .decrypt(nonce, ciphertext.as_ref())
+            .map_err(|e| anyhow::anyhow!("Decryption failed: {}", e))?;
+
+        let decrypted_content =
+            String::from_utf8(decrypted_bytes).map_err(|e| anyhow::anyhow!("Invalid UTF-8 in decrypted content: {}", e))?;
+
+        Ok(decrypted_content)
     }
 }
