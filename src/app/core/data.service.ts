@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { User } from './models';
 import { addCategory, deleteCategoryById, editCategory, findCategoryById, getCategoriesByUser } from './api/categories';
 import { createGroup, deleteGroup, loadGroupsByCategory, updateGroup } from './api/groups';
-import { createNote, deleteNote, getNotesByGroup, updateNote } from './api/notes';
+import { createNote, deleteNote, getNoteById, getNotesByGroup, updateNote } from './api/notes';
 
 export interface Category {
   id?: string;
@@ -284,18 +284,35 @@ export class DataService {
 
   // Notes CRUD
   getNotesByGroup(groupId: string): Observable<Note[]> {
-    return from(getNotesByGroup(groupId));
+ 
+    return from(getNotesByGroup(groupId))
+      .pipe(switchMap(notes => {
+           debugger;
+        this.notes.set(notes);
+        this.notesSubject.next(notes);
+        return new Observable<Note[]>(observer => {
+          observer.next(notes);
+          observer.complete();
+        });
+      }));
   }
 
-  getNoteById(id: string): Observable<Note | undefined> {
-    return from(new Promise<Note | undefined>((resolve, reject) => {
-      const note = this.notes().find(note => note.id === id);
+  getNoteById(id: string): Observable<Note | null> {
+    return from(getNoteById(id))
+    .pipe(switchMap(note => {
       if (note) {
-        resolve(note);
+        return new Observable<Note>(observer => {
+          observer.next(note);
+          observer.complete();
+        });
       } else {
-        reject('Note not found');
+        return new Observable<Note>(observer => {
+          observer.error('Note not found');
+          observer.complete();
+        });
       }
-    }));
+    })
+  );
   }
 
   createNote(groupId: string, title: string, content: string, isEncrypted: boolean = false): Observable<Note> {
@@ -305,6 +322,7 @@ export class DataService {
           return this.getNotesByGroup(groupId);
         }),
         switchMap(notes => {
+  
           this.notes.set(notes);
           this.notesSubject.next(notes);
           const createdNote = notes.find(n => n.title === title && n.content === content);
@@ -336,8 +354,8 @@ export class DataService {
             });
           }
         }),
-        switchMap(() => {
-          const updatedNote = this.notes().find(n => n.id === id);
+        switchMap(() => from(this.getNoteById(id))),
+        switchMap((updatedNote) => {
           if (updatedNote) {
             return new Observable<Note>(observer => {
               observer.next(updatedNote);

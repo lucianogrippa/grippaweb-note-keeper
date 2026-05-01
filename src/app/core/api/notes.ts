@@ -1,6 +1,18 @@
 import { invoke } from "@tauri-apps/api/core";
 import { Note } from "../data.service";
 
+export async function getNoteById(noteId: string): Promise<Note | null> {
+  try {
+    const note = await invoke<Note>("find_note_by_id", { noteId, decryptContent: false });
+    if (note) {
+      return note;
+    }
+  } catch (error: any) {
+    console.error('Error loading note:', error);
+  }
+  return null;
+}
+
 export async function getNotesByGroup(groupId: string): Promise<Note[]> {
   try {
     const notes = await invoke<Note[]>("get_notes_by_group", { groupId });

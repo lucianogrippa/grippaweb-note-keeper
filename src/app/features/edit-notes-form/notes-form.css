@@ -3,6 +3,9 @@
 .notes-section {
   margin-bottom: 32px;
 }
+.hide {
+  display: none !important;
+}
 
 .section-header {
   display: flex;

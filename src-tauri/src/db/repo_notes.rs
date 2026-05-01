@@ -7,7 +7,7 @@ pub async fn get_all_notes_by_group_id(
     pool: &sqlx::Pool<sqlx::Sqlite>,
 ) -> Result<Vec<Note>, anyhow::Error> {
     let notes = sqlx::query_as::<_, Note>(
-            "SELECT notes.id, notes.groups_id, notes.title,IIF(is_encrypted = 1, notes.content, '***') as content, groups.name as group_name, notes.created_at, notes.updated_at FROM notes join groups ON notes.groups_id = groups.id WHERE notes.groups_id = ? ORDER BY notes.created_at DESC",
+            "SELECT notes.id, notes.groups_id AS group_id, groups.name AS group_name, notes.title,  notes.content AS content, notes.is_encrypted, notes.created_at, notes.updated_at FROM notes JOIN groups ON notes.groups_id = groups.id WHERE notes.groups_id = ? ORDER BY notes.created_at DESC",
         )
         .bind(group_id)
         .fetch_all(pool)
@@ -24,7 +24,7 @@ pub async fn get_note_by_id(
 
     if decrypt_content {
         let note = sqlx::query_as::<_, Note>(
-            "SELECT notes.id, notes.group_id, notes.title, notes.content, groups.name as group_name, notes.created_at, notes.updated_at FROM notes join groups ON notes.group_id = groups.id WHERE notes.id = ?",
+            "SELECT notes.id, notes.groups_id AS group_id, groups.name AS group_name, notes.title, notes.content, notes.is_encrypted, notes.created_at, notes.updated_at FROM notes JOIN groups ON notes.groups_id = groups.id WHERE notes.id = ?",
         )
         .bind(note_id)
         .fetch_one(pool)
@@ -44,7 +44,7 @@ pub async fn get_note_by_id(
         return Ok(note);
     } else {
         let note = sqlx::query_as::<_, Note>(
-                "SELECT notes.id, notes.group_id, notes.title,IIF(is_encrypted = 1, notes.content, '***') as content, groups.name as group_name, notes.created_at, notes.updated_at FROM notes join groups ON notes.group_id = groups.id WHERE notes.id = ?",
+                "SELECT notes.id, notes.groups_id AS group_id, groups.name AS group_name, notes.title,  notes.content AS content, notes.is_encrypted, notes.created_at, notes.updated_at FROM notes JOIN groups ON notes.groups_id = groups.id WHERE notes.id = ?",
             )
             .bind(note_id)
             .fetch_one(pool)

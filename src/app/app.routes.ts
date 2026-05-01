@@ -27,16 +27,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'note/:id',
-    loadComponent: () => import('./features/notes/note-editor.component').then(m => m.NoteEditorComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'note/new/:groupId',
-    loadComponent: () => import('./features/notes/note-editor.component').then(m => m.NoteEditorComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'profile',
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [AuthGuard]

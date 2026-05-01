@@ -4,8 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService, Note, Group } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { map, tap } from 'rxjs';
+import { finalize, map, tap } from 'rxjs';
 import { EditNotesForm } from '../edit-notes-form/notes-form';
+import { ask, message } from '@tauri-apps/plugin-dialog';
 
 @Component({
   selector: 'app-group-detail',
@@ -105,7 +106,7 @@ export class GroupDetailComponent implements OnInit {
   }
 
   viewNote(noteId: string): void {
-    this.router.navigate(['/note', noteId]);
+    this.editNote(noteId);
   }
 
 
@@ -115,19 +116,28 @@ export class GroupDetailComponent implements OnInit {
     this.newNote.set({ id: '', title: '', content: '', is_encrypted: false });
   }
 
-  deleteNote(noteId: string): void {
+  async deleteNote(noteId: string): Promise<void> {
+    const confirmed = await ask(`Are you sure you want to delete this note?`, {
+      title: 'Confirm Delete',
+      kind: 'warning'
+    });
+    if (!confirmed) return;
+
     this.notes().pipe(map(notes => notes.find(n => n.id === noteId))).subscribe({
       next: (result) => {
-        if (confirm(`Are you sure you want to delete "${result?.title}"?`)) {
           this.dataService.deleteNote(noteId).subscribe({
             next: () => {
-              console.log('Note deleted successfully');
+              this.isLoaded.set(false);
+              this.noteId.set('');
+              this.showCreateForm.set(false);
+              this.newNote.set({ id: '', title: '', content: '', is_encrypted: false });
+              this.reloadNote();
             },
             error: (error) => {
+              message('Failed to delete note. Please try again.', { title: 'Delete Error', kind: 'error' });
               console.error('Error deleting note:', error);
             }
           });
-        }
       }
     });
   }
@@ -150,19 +160,26 @@ export class GroupDetailComponent implements OnInit {
 
   handleFormSaved(success: boolean): void {
     if (success) {
+      this.isLoaded.set(false);
       this.noteId.set('');
       this.showCreateForm.set(false);
       this.newNote.set({ id: '', title: '', content: '', is_encrypted: false });
-      this.dataService.getNotesByGroup(this.groupId()).subscribe({
-        next: (notes) => {
-          this.totalNotes.set(notes.length);
-        },
-        error: (error) => {
-          console.error('Error loading notes:', error);
-        }
-      });
+      this.reloadNote();  
     }
   }
+  private reloadNote() {
+    this.notes()
+      .pipe(finalize(() => {
+        this.isLoaded.set(true);
+        window.location.reload();
+      }))
+      .subscribe({
+        next: (notes) => {
+          this.totalNotes.set(notes.length);
+        }
+      });
+  }
+
   handleCancelCreate(): void {
     this.noteId.set('');
     this.showCreateForm.set(false);
@@ -175,15 +192,24 @@ export class GroupDetailComponent implements OnInit {
   }
   editNote(noteId: string): void {
     this.noteId.set(noteId);
-    this.newNote.update(current => {
-      const note = this.notes().pipe(map(notes => notes.find(n => n.id === noteId)));
-      let foundNote: Note | undefined;
-      note.subscribe(n => foundNote = n);
-      if (foundNote) {
-        return { ...current, ...foundNote };
+    this.dataService.getNoteById(noteId).subscribe({
+      next: (note) => {
+        if (note) {
+          this.newNote.set({
+            id: note.id || '',
+            title: note.title,
+            content: note.content,
+            is_encrypted: note.is_encrypted
+          });
+          this.showCreateForm.set(true);
+        } else {
+          message('Note not found', { title: 'Error', kind: 'error' });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading note for editing:', error);
       }
-      return current;
     });
-    this.showCreateForm.set(true);
+    
   }
 }

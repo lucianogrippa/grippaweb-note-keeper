@@ -87,6 +87,10 @@ noteData = signal({
         },
         error: (error) => {
           console.error('Error updating note:', error);
+          message('Failed to update note. Please try again.', {
+            kind: 'error',
+            title: 'Update Error'
+          });
         }
       });
     }
@@ -110,13 +114,34 @@ noteData = signal({
           return;
         }
 
-        this.dataService.createNote(title, content, groupId, note.is_encrypted).subscribe({
+      // check min and max characters
+      if(title.length < 5 || title.length > 150) {  
+        message('Title must be between 5 and 150 characters.', {
+          kind: 'error',
+          title: 'Validation Error'
+        });
+        return;
+      }
+
+      if(content.length < 10 || content.length > 500) {
+        message('Content must be between 10 and 500 characters.', {
+          kind: 'error',
+          title: 'Validation Error'
+        });
+        return;
+      }
+
+        this.dataService.createNote(groupId,title, content, note.is_encrypted).subscribe({
           next: () => {
             this.noteData.set({id:'', title: '', content: '', is_encrypted: false });
             this.formSaved.emit(true);
           },
           error: (error) => {
             console.error('Error creating note:', error);
+            message('Failed to create note. Please try again.', {
+              kind: 'error',
+              title: 'Create Error'
+            });
           }
         });
       }

@@ -5,6 +5,8 @@
       type="text"
       [value]="noteData().title"
       (input)="updateNewNoteTitle($event)"
+      [minLength]="5"
+      [maxLength]="150"
       name="title"
       placeholder="Note title"
       required
@@ -14,15 +16,18 @@
       class="textarea"
       [value]="noteData().content"
       (input)="updateNewNoteContent($event)"
+      [minLength]="5"
+      [maxLength]="500"
       name="content"
       placeholder="Write your note content..."
       rows="6"
       required
     ></textarea>
 
-    <div class="encryption-toggle">
+    <div class="encryption-toggle hide">
       <label class="toggle-label">
         <input
+          disabled
           type="checkbox"
           [checked]="noteData().is_encrypted"
           (change)="toggleEncryption()"
@@ -46,7 +51,7 @@
   </div>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary" [disabled]="!form.valid">
-      Create Note
+      Save Note
     </button>
     <button type="button" class="btn btn-secondary" (click)="cancelCreate()">
       Cancel
