@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { User } from './models';
 import { addCategory, deleteCategoryById, editCategory, findCategoryById, getCategoriesByUser } from './api/categories';
 import { createGroup, deleteGroup, loadGroupsByCategory, updateGroup } from './api/groups';
+import { createNote, deleteNote, getNotesByGroup, updateNote } from './api/notes';
 
 export interface Category {
   id?: string;
@@ -18,7 +19,6 @@ export interface Group {
   id?: string;
   categories_id: string;
   name: string;
-  description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -53,13 +53,13 @@ export class DataService {
   notes = signal<Note[]>([]);
 
   currentUser = signal(this.authService.currentUser() as User | null);
-  
+
   constructor() {
     this.loadCategories();
   }
 
   async loadCategories(): Promise<void> {
-   
+
     const user = this.authService.currentUser();
 
     if (user) {
@@ -70,13 +70,13 @@ export class DataService {
     }
   }
 
-    loadGroups(id: string): Observable<Group[]> {
-      return from(loadGroupsByCategory(id).then(groups => {
-        this.groups.set(groups);
-        this.groupsSubject.next(groups);
-        return groups;
-      }));
-    }
+  loadGroups(id: string): Observable<Group[]> {
+    return from(loadGroupsByCategory(id).then(groups => {
+      this.groups.set(groups);
+      this.groupsSubject.next(groups);
+      return groups;
+    }));
+  }
 
   // Categories CRUD
   getCategories(): Category[] {
@@ -98,22 +98,22 @@ export class DataService {
       };
 
       addCategory(this.currentUser()?.id || 'user-1', name, description || '')
-      .then(() => {
-        getCategoriesByUser(this.currentUser()?.id || 'user-1')        .then(categories => {
-          this.categories.set(categories);
-          this.categoriesSubject.next(categories);
-          
-          observer.next(newCategory);
-          observer.complete();
-        })
-        .catch(error => {
-          console.error('Error loading categories after creation:', error);
+        .then(() => {
+          getCategoriesByUser(this.currentUser()?.id || 'user-1').then(categories => {
+            this.categories.set(categories);
+            this.categoriesSubject.next(categories);
+
+            observer.next(newCategory);
+            observer.complete();
+          })
+            .catch(error => {
+              console.error('Error loading categories after creation:', error);
+              observer.error(error);
+            });
+        }).catch(error => {
+          console.error('Error creating category:', error);
           observer.error(error);
         });
-      }).catch(error => {
-        console.error('Error creating category:', error);
-        observer.error(error);
-      });
     });
   }
 
@@ -137,7 +137,7 @@ export class DataService {
                 .then(categories => {
                   this.categories.set(categories);
                   this.categoriesSubject.next(categories);
-                  
+
                   const updatedCategory = categories.find(cat => cat.id === id);
                   if (updatedCategory) {
                     observer.next(updatedCategory);
@@ -145,7 +145,7 @@ export class DataService {
                     observer.error('Updated category not found after refresh');
                   }
                   observer.complete();
-                } )
+                })
                 .catch(error => {
                   console.error('Error loading categories after update:', error);
                   observer.error(error);
@@ -169,27 +169,27 @@ export class DataService {
   deleteCategory(id: string): Observable<boolean> {
     return new Observable(observer => {
       deleteCategoryById(id)
-      .then(() => {
-        getCategoriesByUser(this.currentUser()?.id || 'user-1')
-          .then(categories => {
-            this.categories.set(categories);
-            this.categoriesSubject.next(categories);
-          })
-          .then(() => {
-            observer.next(true);
-            observer.complete();
-          })
-          .catch(error => {
-            console.error('Error loading categories after deletion:', error);
-            observer.error(error);
-            observer.complete();
-          });
-      })
-      .catch(error => {
-        console.error('Error deleting category:', error);
-        observer.error(error);
-        observer.complete();
-      });
+        .then(() => {
+          getCategoriesByUser(this.currentUser()?.id || 'user-1')
+            .then(categories => {
+              this.categories.set(categories);
+              this.categoriesSubject.next(categories);
+            })
+            .then(() => {
+              observer.next(true);
+              observer.complete();
+            })
+            .catch(error => {
+              console.error('Error loading categories after deletion:', error);
+              observer.error(error);
+              observer.complete();
+            });
+        })
+        .catch(error => {
+          console.error('Error deleting category:', error);
+          observer.error(error);
+          observer.complete();
+        });
     });
   }
 
@@ -204,170 +204,203 @@ export class DataService {
 
   createGroup(categoryId: string, name: string): Observable<Group> {
     return from(createGroup({ name, categories_id: categoryId }))
-    .pipe(
-      switchMap(()=>loadGroupsByCategory(categoryId)),
-      switchMap(groups => {
-        this.groups.set(groups);
-        this.groupsSubject.next(groups);
-        const createdGroup = groups.find(g => g.name === name);
-        if (createdGroup) {
-          return new Observable<Group>(observer => {
-            observer.next(createdGroup);
-            observer.complete();
-          });
-        } else {
-          return new Observable<Group>(observer => {
-            observer.error('Created group not found after refresh');
-            observer.complete();
-          });
-        }
-      }));
-     } 
+      .pipe(
+        switchMap(() => loadGroupsByCategory(categoryId)),
+        switchMap(groups => {
+          this.groups.set(groups);
+          this.groupsSubject.next(groups);
+          const createdGroup = groups.find(g => g.name === name);
+          if (createdGroup) {
+            return new Observable<Group>(observer => {
+              observer.next(createdGroup);
+              observer.complete();
+            });
+          } else {
+            return new Observable<Group>(observer => {
+              observer.error('Created group not found after refresh');
+              observer.complete();
+            });
+          }
+        }));
+  }
 
   updateGroup(id: string, name: string): Observable<Group> {
-    return from(updateGroup({id, name} as Group))
-    .pipe(
-      switchMap(() => {
-        const group = this.getGroupById(id);
-        if (group) {
-          return loadGroupsByCategory(group.categories_id);
-        } else {
-          return new Observable<Group[]>(observer => {
-            observer.error('Group not found for update');
-            observer.complete();
-          });
-        }
-      }),
-      switchMap(groups => {
-        this.groups.set(groups);
-        this.groupsSubject.next(groups);
-        const updatedGroup = groups.find(g => g.id === id);
-        if (updatedGroup) {
-          return new Observable<Group>(observer => {
-            observer.next(updatedGroup);
-            observer.complete();
-          });
-        } else {
-          return new Observable<Group>(observer => {
-            observer.error('Updated group not found after refresh');
-            observer.complete();
-          });
-        }
-      })
-    );
+    return from(updateGroup({ id, name } as Group))
+      .pipe(
+        switchMap(() => {
+          const group = this.getGroupById(id);
+          if (group) {
+            return loadGroupsByCategory(group.categories_id);
+          } else {
+            return new Observable<Group[]>(observer => {
+              observer.error('Group not found for update');
+              observer.complete();
+            });
+          }
+        }),
+        switchMap(groups => {
+          this.groups.set(groups);
+          this.groupsSubject.next(groups);
+          const updatedGroup = groups.find(g => g.id === id);
+          if (updatedGroup) {
+            return new Observable<Group>(observer => {
+              observer.next(updatedGroup);
+              observer.complete();
+            });
+          } else {
+            return new Observable<Group>(observer => {
+              observer.error('Updated group not found after refresh');
+              observer.complete();
+            });
+          }
+        })
+      );
   }
 
   deleteGroup(id: string): Observable<boolean> {
     return from(deleteGroup(id))
-    .pipe(
-      switchMap(() => {
-        const group = this.getGroupById(id);
-        if (group) {
-          return loadGroupsByCategory(group.categories_id);
-        } else {
-          return new Observable<Group[]>(observer => {
-            observer.error('Group not found for deletion');
+      .pipe(
+        switchMap(() => {
+          const group = this.getGroupById(id);
+          if (group) {
+            return loadGroupsByCategory(group.categories_id);
+          } else {
+            return new Observable<Group[]>(observer => {
+              observer.error('Group not found for deletion');
+              observer.complete();
+            });
+          }
+        }),
+        switchMap(groups => {
+          this.groups.set(groups);
+          this.groupsSubject.next(groups);
+          return new Observable<boolean>(observer => {
+            observer.next(true);
             observer.complete();
           });
-        }
-      }),
-      switchMap(groups => {
-        this.groups.set(groups);
-        this.groupsSubject.next(groups);
-        return new Observable<boolean>(observer => {
-          observer.next(true);
-          observer.complete();
-        });
-      })
-    );
+        })
+      );
   }
 
   // Notes CRUD
-  getNotesByGroup(groupId: string): Note[] {
-    return this.notes().filter(note => note.groups_id === groupId);
+  getNotesByGroup(groupId: string): Observable<Note[]> {
+    return from(getNotesByGroup(groupId));
   }
 
-  getNoteById(id: string): Note | undefined {
-    return this.notes().find(note => note.id === id);
+  getNoteById(id: string): Observable<Note | undefined> {
+    return from(new Promise<Note | undefined>((resolve, reject) => {
+      const note = this.notes().find(note => note.id === id);
+      if (note) {
+        resolve(note);
+      } else {
+        reject('Note not found');
+      }
+    }));
   }
 
   createNote(groupId: string, title: string, content: string, isEncrypted: boolean = false): Observable<Note> {
-    return new Observable(observer => {
-      const newNote: Note = {
-        groups_id: groupId,
-        title,
-        content,
-        is_encrypted: isEncrypted,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      const updatedNotes = [...this.notes(), newNote];
-      this.notes.set(updatedNotes);
-      this.notesSubject.next(updatedNotes);
-      
-      observer.next(newNote);
-      observer.complete();
-    });
+    return from(createNote({ title, content, is_encrypted: isEncrypted, group_id: groupId }))
+      .pipe(
+        switchMap(() => {
+          return this.getNotesByGroup(groupId);
+        }),
+        switchMap(notes => {
+          this.notes.set(notes);
+          this.notesSubject.next(notes);
+          const createdNote = notes.find(n => n.title === title && n.content === content);
+          if (createdNote) {
+            return new Observable<Note>(observer => {
+              observer.next(createdNote);
+              observer.complete();
+            });
+          } else {
+            return new Observable<Note>(observer => {
+              observer.error('Created note not found after refresh');
+              observer.complete();
+            });
+          }
+        })
+      );
   }
 
   updateNote(id: string, title: string, content: string, isEncrypted?: boolean): Observable<Note> {
-    return new Observable(observer => {
-      const notes = this.notes();
-      const index = notes.findIndex(note => note.id === id);
-      
-      if (index !== -1) {
-        const updatedNote = {
-          ...notes[index],
-          title,
-          content,
-          is_encrypted: isEncrypted !== undefined ? isEncrypted : notes[index].is_encrypted,
-          updated_at: new Date().toISOString()
-        };
-        
-        const updatedNotes = [...notes];
-        updatedNotes[index] = updatedNote;
-        
-        this.notes.set(updatedNotes);
-        this.notesSubject.next(updatedNotes);
-        
-        observer.next(updatedNote);
-      } else {
-        observer.error('Note not found');
-      }
-      observer.complete();
-    });
+    return from(this.getNoteById(id))
+      .pipe(
+        switchMap(note => {
+          if (note) {
+            return from(updateNote({ ...note, title, content, is_encrypted: isEncrypted ?? note.is_encrypted } as Note));
+          } else {
+            return new Observable<string>(observer => {
+              observer.error('Note not found for update');
+              observer.complete();
+            });
+          }
+        }),
+        switchMap(() => {
+          const updatedNote = this.notes().find(n => n.id === id);
+          if (updatedNote) {
+            return new Observable<Note>(observer => {
+              observer.next(updatedNote);
+              observer.complete();
+            });
+          } else {
+            return new Observable<Note>(observer => {
+              observer.error('Updated note not found after refresh');
+              observer.complete();
+            });
+          }
+        })
+      );
   }
 
   deleteNote(id: string): Observable<boolean> {
-    return new Observable(observer => {
-      const updatedNotes = this.notes().filter(note => note.id !== id);
-      this.notes.set(updatedNotes);
-      this.notesSubject.next(updatedNotes);
-      
-      observer.next(true);
-      observer.complete();
-    });
+    return from(this.getNoteById(id))
+      .pipe(
+        switchMap(note => {
+          if (note) {
+            return from(deleteNote(id))
+              .pipe(
+                switchMap(() => {
+                  const notes = this.getNotesByGroup(note.groups_id);
+                  return notes;
+                }),
+                switchMap(notes => {
+                  this.notes.set(notes);
+                  this.notesSubject.next(notes);
+                  return new Observable<boolean>(observer => {
+                    observer.next(true);
+                    observer.complete();
+                  });
+                })
+              );
+          } else {
+            return new Observable<boolean>(observer => {
+              observer.error('Note not found for deletion');
+              observer.complete();
+            });
+          }
+        })
+      );
   }
 
   // Search functionality
   searchAll(query: string): { categories: Category[], groups: Group[], notes: Note[] } {
     const lowerQuery = query.toLowerCase();
-    
-    const matchedCategories = this.categories().filter(cat => 
-      cat.name.toLowerCase().includes(lowerQuery) || 
+
+    const matchedCategories = this.categories().filter(cat =>
+      cat.name.toLowerCase().includes(lowerQuery) ||
       cat.description?.toLowerCase().includes(lowerQuery)
     );
-    
-    const matchedGroups = this.groups().filter(group => 
+
+    const matchedGroups = this.groups().filter(group =>
       group.name.toLowerCase().includes(lowerQuery)
     );
-    
-    const matchedNotes = this.notes().filter(note => 
-      note.title.toLowerCase().includes(lowerQuery) || 
+
+    const matchedNotes = this.notes().filter(note =>
+      note.title.toLowerCase().includes(lowerQuery) ||
       note.content.toLowerCase().includes(lowerQuery)
     );
-    
+
     return {
       categories: matchedCategories,
       groups: matchedGroups,

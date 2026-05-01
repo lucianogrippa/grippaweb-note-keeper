@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService, Note, Group } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { map, Observable, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-note-editor',
@@ -22,28 +23,12 @@ export class NoteEditorComponent implements OnInit {
   // Route params
   noteId = signal<string | null>(null);
   groupId = signal<string | null>(null);
-  
-  // Data
-  note = computed(() => {
-    const id = this.noteId();
-    if (id) {
-      return this.dataService.getNoteById(id);
-    }
-    return null;
-  });
 
-  group = computed(() => {
-    const note = this.note();
-    if (note) {
-      return this.dataService.getGroupById(note.groups_id);
-    }
-    const groupId = this.groupId();
-    if (groupId) {
-      return this.dataService.getGroupById(groupId);
-    }
-    return null;
-  });
-  
+  // Data
+  note = signal<Note | null>(null);
+
+  group = signal<Group | null>(null);
+
   category = computed(() => {
     const group = this.group();
     if (group) {
@@ -56,7 +41,7 @@ export class NoteEditorComponent implements OnInit {
   title = signal('');
   content = signal('');
   isEncrypted = signal(false);
-  
+
   // UI state
   isLoaded = signal(false);
   isEditing = computed(() => this.noteId() !== null);
@@ -73,7 +58,7 @@ export class NoteEditorComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const noteId = params.get('id');
       const groupId = params.get('groupId');
-      
+
       if (noteId && noteId !== 'new') {
         this.noteId.set(noteId);
         this.loadNote();
@@ -81,60 +66,75 @@ export class NoteEditorComponent implements OnInit {
         this.groupId.set(groupId);
         this.initNewNote();
       }
+
+      
+
+      this.fetchGroupByNoteItem();
+
+      // Track changes for unsaved warning
+      this.setupChangeTracking();
+
+      setTimeout(() => {
+        this.isLoaded.set(true);
+      }, 100);
     });
-
-    // Track changes for unsaved warning
-    this.setupChangeTracking();
-
-    setTimeout(() => {
-      this.isLoaded.set(true);
-    }, 100);
   }
 
   private loadNote(): void {
-    const note = this.note();
-    if (note) {
-      this.title.set(note.title);
-      this.content.set(note.content);
-      this.isEncrypted.set(note.is_encrypted);
-      this.hasUnsavedChanges.set(false);
+    const noteId = this.noteId();
+    if (!noteId) return;
+
+    this.dataService.getNoteById(noteId).subscribe({
+      next: (note) => {
+        this.note.set(note || null);
+        this.title.set(note?.title || '');
+        this.content.set(note?.content || '');
+        this.isEncrypted.set(note?.is_encrypted || false);
+      },
+      error: (error) => {
+        console.error('Error loading note:', error);
+        alert('Failed to load note. Please try again.');
+        this.goBack();
+      }});
+
     }
-  }
 
   private initNewNote(): void {
-    this.title.set('');
-    this.content.set('');  
-    this.isEncrypted.set(false);
-    this.hasUnsavedChanges.set(false);
-  }
+      this.title.set('');
+      this.content.set('');
+      this.isEncrypted.set(false);
+      this.hasUnsavedChanges.set(false);
+    }
 
   private setupChangeTracking(): void {
-    // Initial values for comparison
-    let initialTitle = this.title();
-    let initialContent = this.content();
-    let initialIsEncrypted = this.isEncrypted();
+      // Initial values for comparison
+      let initialTitle = this.title();
+      let initialContent = this.content();
+      let initialIsEncrypted = this.isEncrypted();
 
-    // Check for changes whenever values update
-    const checkChanges = () => {
-      const hasChanges = 
-        this.title() !== initialTitle || 
-        this.content() !== initialContent ||
-        this.isEncrypted() !== initialIsEncrypted;
-      this.hasUnsavedChanges.set(hasChanges);
-    };
+      // Check for changes whenever values update
+      const checkChanges = () => {
+        const hasChanges =
+          this.title() !== initialTitle ||
+          this.content() !== initialContent ||
+          this.isEncrypted() !== initialIsEncrypted;
+        this.hasUnsavedChanges.set(hasChanges);
+      };
 
-    // Set up effect to track changes
-    setTimeout(() => {
+      // Set up effect to track changes
+      setTimeout(() => {
       const observer = new MutationObserver(() => {
         checkChanges();
       });
-      
+
       observer.observe(document.body, {
         subtree: true,
         childList: true
       });
     }, 100);
   }
+
+ 
 
   updateTitle(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -161,14 +161,14 @@ export class NoteEditorComponent implements OnInit {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
-    
+
     const beforeText = textarea.value.substring(0, start);
     const afterText = textarea.value.substring(end);
-    
+
     const newText = beforeText + textBefore + selectedText + textAfter + afterText;
-    
+
     this.content.set(newText);
-    
+
     // Restore cursor position
     setTimeout(() => {
       const newCursorPos = start + textBefore.length + selectedText.length;
@@ -196,22 +196,22 @@ export class NoteEditorComponent implements OnInit {
   async saveNote(): Promise<void> {
     const titleValue = this.title().trim();
     const contentValue = this.content().trim();
-    
+
     if (!titleValue || !contentValue) {
       alert('Please provide both title and content for the note.');
       return;
     }
 
     this.isSaving.set(true);
-    
+
     try {
       if (this.isEditing()) {
         // Update existing note
         const noteId = this.noteId()!;
         await this.dataService.updateNote(
-          noteId, 
-          titleValue, 
-          contentValue, 
+          noteId,
+          titleValue,
+          contentValue,
           this.isEncrypted()
         ).toPromise();
       } else {
@@ -224,7 +224,7 @@ export class NoteEditorComponent implements OnInit {
           this.isEncrypted()
         ).toPromise();
       }
-      
+
       this.hasUnsavedChanges.set(false);
       this.goBack();
     } catch (error) {
@@ -272,5 +272,20 @@ export class NoteEditorComponent implements OnInit {
 
   formatDate(date: string): string {
     return new Date(date).toLocaleString();
+  }
+
+   private fetchGroupByNoteItem() {
+    const noteData = this.note();
+
+    if(noteData) {
+      const group= this.dataService.getGroupById(noteData?.groups_id);
+
+
+      if(group && group.id) {
+        this.group.set(group);
+      }
+      return;
+
+    }
   }
 }

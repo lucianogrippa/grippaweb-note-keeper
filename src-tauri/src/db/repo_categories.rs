@@ -70,8 +70,7 @@ pub async fn new_category(
     .bind(name)
     .bind(description)
     .execute(pool)
-    .await
-    .context("Failed to insert new category into database")?;
+    .await?;
 
     match result.last_insert_rowid() {
         id if id > 0 => Ok(id.to_string()),

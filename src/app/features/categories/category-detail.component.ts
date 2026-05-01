@@ -1,18 +1,22 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataService, Group, Category } from '../../core/data.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, map } from 'rxjs';
+import { DataService, Group } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { EditGroupForm } from '../edit-group-form/edit-group-form';
 
 @Component({
   selector: 'app-category-detail',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FormsModule],
+  imports: [CommonModule, NavbarComponent, FormsModule, EditGroupForm],
   templateUrl: './category-detail.component.html',
   styleUrl: './category-detail.component.css'
 })
 export class CategoryDetailComponent implements OnInit {
+
+  protected totalNoteInGroups = signal(0);
   private dataService = inject(DataService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -22,7 +26,7 @@ export class CategoryDetailComponent implements OnInit {
     const id = this.categoryId();
     return this.dataService.categories().find(c => c.id === id);
   });
-  
+
   groups = computed(() => {
     const id = this.categoryId();
     return this.dataService.getGroupsByCategory(id);
@@ -30,17 +34,11 @@ export class CategoryDetailComponent implements OnInit {
 
   // UI state
   isLoaded = signal(false);
-  showCreateForm = signal(false);
-  isEditingGroup = signal<string | null>(null);
+  showAddEditGroupForm = signal(false);
+  editGroupId = signal<string | null>(null);
 
-  // Form state  
-  newGroup = signal({
-    name: '',
-    description: ''
-  });
 
-  editGroupName = signal('');
-  editGroupDescription = signal('');
+  groupData = signal<Group | null>(null);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -64,19 +62,15 @@ export class CategoryDetailComponent implements OnInit {
     }, 100);
   }
 
-  updateNewGroupName(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.newGroup.update(current => ({ ...current, name: target.value }));
-  }
 
-  updateNewGroupDescription(event: Event): void {
-    const target = event.target as HTMLTextAreaElement;
-    this.newGroup.update(current => ({ ...current, description: target.value }));
-  }
 
-  getGroupStats(groupId: string): { noteCount: number } {
-    const noteCount = this.dataService.getNotesByGroup(groupId).length;
-    return { noteCount };
+
+  getGroupStats(groupId: string): Observable<{ noteCount: number }> {
+    return this.dataService.getNotesByGroup(groupId).pipe(map(notes => {
+      console.log(`Group ${groupId} has ${notes.length} notes`);
+      return { noteCount: notes.length };
+    }));
+
   }
 
   formatDate(date: string): string {
@@ -84,7 +78,7 @@ export class CategoryDetailComponent implements OnInit {
     const groupDate = new Date(date);
     const diffTime = now.getTime() - groupDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -95,63 +89,19 @@ export class CategoryDetailComponent implements OnInit {
     this.router.navigate(['/group', groupId]);
   }
 
-  createGroup(): void {
-    const group = this.newGroup();
-    const name = group.name.trim();
-    const description = group.description.trim();
-    const categoryId = this.categoryId();
-    
-    if (name && categoryId) {
-      this.dataService.createGroup(categoryId, name).subscribe({
-        next: () => {
-          this.showCreateForm.set(false);
-          this.newGroup.set({ name: '', description: '' });
-        },
-        error: (error) => {
-          console.error('Error creating group:', error);
-        }
-      });
-    }
-  }
 
-  cancelCreate(): void {
-    this.showCreateForm.set(false);
-    this.newGroup.set({ name: '', description: '' });
-  }
 
-  editGroup(group: Group): void {
-    this.isEditingGroup.set(group.id || null);
-    this.editGroupName.set(group.name);
-    this.editGroupDescription.set(group.description || '');
-  }
 
-  saveEditGroup(): void {
-    const groupId = this.isEditingGroup();
-    if (groupId) {
-      const name = this.editGroupName().trim();
-      const description = this.editGroupDescription().trim();
-      
-      if (name) {
-        this.dataService.updateGroup(groupId, name).subscribe({
-          next: () => {
-            this.isEditingGroup.set(null);
-          },
-          error: (error) => {
-            console.error('Error updating group:', error);
-          }
-        });
-      }
-    }
-  }
 
   cancelEditGroup(): void {
-    this.isEditingGroup.set(null);
+    this.editGroupId.set(null);
+    this.groupData.set(null);
   }
 
   deleteGroup(groupId: string): void {
     const group = this.groups().find(g => g.id === groupId);
     const groupName = group?.name || 'this group';
-    
+
     if (confirm(`Are you sure you want to delete "${groupName}" and all its notes?`)) {
       this.dataService.deleteGroup(groupId).subscribe({
         next: () => {
@@ -167,4 +117,41 @@ export class CategoryDetailComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/dashboard']);
   }
+
+  handleFormSaved(success: boolean): void {
+    if (success) {
+      this.showAddEditGroupForm.set(false);
+      this.editGroupId.set(null);
+
+      // reload groups to reflect changes
+      this.dataService.loadGroups(this.categoryId()).subscribe({
+        next: () => {
+          console.log('Groups reloaded successfully');
+        },
+        error: (error) => {
+          console.error('Error reloading groups:', error);
+        }
+      });
+    } else {
+      console.error('Error saving group');
+    }
+  }
+
+  addGroup(): void {
+    this.showAddEditGroupForm.set(true);
+    this.editGroupId.set(null);
+    this.groupData.set({ name: '', id: '', categories_id: this.categoryId() } as Group);
+  }
+
+  editGroup(group: Group): void {
+    this.showAddEditGroupForm.set(true);
+    this.editGroupId.set(group.id || null);
+    this.groupData.set({ name: group.name, id: group.id || '', categories_id: group.categories_id || '' } as Group);
+  }
+  handleCancelEdit(): void {
+    this.showAddEditGroupForm.set(false);
+    this.editGroupId.set(null);
+    this.groupData.set(null);
+  }
+
 }

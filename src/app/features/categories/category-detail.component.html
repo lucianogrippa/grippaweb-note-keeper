@@ -36,7 +36,7 @@
           </svg>
           Groups in {{ category()?.name }} ({{ groups().length }})
         </h2>
-        <button class="action-btn create-btn btn btn-primary" (click)="showCreateForm.set(true)">
+        <button class="action-btn create-btn btn btn-primary" (click)="addGroup()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -45,31 +45,14 @@
       </div>
 
       <!-- Create Group Form -->
-      @if (showCreateForm()) {
-        <form class="group-form card" (ngSubmit)="createGroup()" #form="ngForm">
-          <div class="form-group">
-            <input
-              class="input"
-              type="text"
-              [value]="newGroup().name"
-              (input)="updateNewGroupName($event)"
-              name="name"
-              placeholder="Group name"
-              required
-              #nameInput>
-            <textarea
-              class="textarea"
-              [value]="newGroup().description"
-              (input)="updateNewGroupDescription($event)"
-              name="description"
-              placeholder="Description (optional)"
-              rows="2"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="!form.valid">Create</button>
-            <button type="button" class="btn btn-secondary" (click)="cancelCreate()">Cancel</button>
-          </div>
-        </form>
+      @if (showAddEditGroupForm()) {
+       <app-edit-group-form
+          [groupId]="editGroupId() || ''"
+          [groupData]="groupData"
+          (formSaved)="handleFormSaved($event)"
+          (cancelEdit)="handleCancelEdit()"
+          [categoriesId]="categoryId()"
+        ></app-edit-group-form>
       }
 
       <!-- Groups Grid -->
@@ -92,12 +75,6 @@
                 </button>
               </div>
             </div>
-            <div class="group-content">
-              <p>{{ group.description || 'No description available' }}</p>
-              <div class="group-stats">
-                <span class="stat">{{ getGroupStats(group.id || '').noteCount }} notes</span>
-              </div>
-            </div>
             <div class="group-footer">
               <small>Updated {{ formatDate(group.updated_at) }}</small>
             </div>
@@ -111,7 +88,7 @@
             </div>
             <h3>No groups yet</h3>
             <p>Create your first group to organize your notes!</p>
-            <button class="create-note-btn btn btn-primary" (click)="showCreateForm.set(true)">
+            <button class="create-note-btn btn btn-primary" (click)="addGroup()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>

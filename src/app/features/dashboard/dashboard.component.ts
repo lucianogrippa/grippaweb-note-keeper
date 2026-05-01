@@ -1,38 +1,41 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { combineLatest, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../core/auth.service';
 import { DataService, Category } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { EditCategoryForm } from '../edit-category-form/edit-category-form';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FormsModule],
+  imports: [CommonModule, NavbarComponent, FormsModule, EditCategoryForm],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+
   private authService = inject(AuthService);
   private dataService = inject(DataService);
   private router = inject(Router);
 
   currentUser = computed(() => this.authService.currentUser());
   categories = computed(() => this.dataService.categories());
-  
+  noteCount = signal(0);
   // UI state
   isLoaded = signal(false);
   showCreateForm = signal(false);
-  isEditingCategory = signal<string | null>(null);
+  categoryId = signal<string | null>(null);
   
   // Form state  
   newCategory = signal({
     name: '',
-    description: ''
+    description: '',
+    userId: this.currentUser()?.id || ''
   });
-  editCategoryName = signal('');
-  editCategoryDescription = signal('');
 
   ngOnInit(): void {
     // Trigger animation after small delay
@@ -52,25 +55,6 @@ export class DashboardComponent implements OnInit {
     return new Date();
   }
 
-  updateNewCategoryName(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.newCategory.update(current => ({ ...current, name: target.value }));
-  }
-
-  updateNewCategoryDescription(event: Event): void {
-    const target = event.target as HTMLTextAreaElement;
-    this.newCategory.update(current => ({ ...current, description: target.value }));
-  }
-
-  getCategoryStats(categoryId: string): { groupCount: number; noteCount: number } {
-    const groupCount = this.dataService.getGroupsByCategory(categoryId).length;
-    const groups = this.dataService.getGroupsByCategory(categoryId);
-    const noteCount = groups.reduce((total, group) => {
-      return total + this.dataService.getNotesByGroup(group.id || '').length;
-    }, 0);
-    
-    return { groupCount, noteCount };
-  }
 
   formatDate(date: string): string {
     const now = new Date();
@@ -88,56 +72,33 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/category', categoryId]);
   }
 
-  createCategory(): void {
-    const category = this.newCategory();
-    const name = category.name.trim();
-    const description = category.description.trim();
-    
-    if (name) {
-      this.dataService.createCategory(name, description || undefined).subscribe({
-        next: () => {
-          this.showCreateForm.set(false);
-          this.newCategory.set({ name: '', description: '' });
-        },
-        error: (error) => {
-          console.error('Error creating category:', error);
-        }
-      });
-    }
+
+  handleCancelEdit(): void {
+    this.categoryId.set(null);
+    this.showCreateForm.set(false);
+    this.newCategory.set({ name: '', description: '', userId: this.currentUser()?.id || '' });
   }
 
-  cancelCreate(): void {
-    this.showCreateForm.set(false);
-    this.newCategory.set({ name: '', description: '' });
+  handleFormSaved(saved: boolean): void {
+    if (saved) {
+      this.categoryId.set(null);
+      this.showCreateForm.set(false);
+      this.newCategory.set({ name: '', description: '', userId: this.currentUser()?.id || '' });
+      this.dataService.loadCategories();
+    }
   }
 
   editCategory(category: Category): void {
-    this.isEditingCategory.set(category.id || null);
-    this.editCategoryName.set(category.name);
-    this.editCategoryDescription.set(category.description || '');
+    this.categoryId.set(category.id || null);
+    this.newCategory.set({ name: category.name, description: category.description || '', userId: this.currentUser()?.id || '' });
+    this.showCreateForm.set(true);
+    this.dataService.loadCategories();
   }
-
-  cancelEditCategory(): void {
-    this.isEditingCategory.set(null);
-  }
-
-  saveEditCategory(): void {
-    const categoryId = this.isEditingCategory();
-    if (categoryId) {
-      const name = this.editCategoryName().trim();
-      const description = this.editCategoryDescription().trim();
-      
-      if (name) {
-        this.dataService.updateCategory(categoryId, name, description || undefined).subscribe({
-          next: () => {
-            this.isEditingCategory.set(null);
-          },
-          error: (error) => {
-            console.error('Error updating category:', error);
-          }
-        });
-      }
-    }
+  addCategory(): void {
+    this.categoryId.set(null);
+    this.newCategory.set({ name: '', description: '', userId: this.currentUser()?.id || '' });
+    this.showCreateForm.set(true);
+    this.dataService.loadCategories();
   }
 
   deleteCategory(categoryId: string): void {

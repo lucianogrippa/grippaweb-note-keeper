@@ -20,7 +20,7 @@
           </svg>
           My Categories ({{ categories().length }})
         </h2>
-        <button class="action-btn create-btn btn btn-primary" (click)="showCreateForm.set(true)">
+        <button class="action-btn create-btn btn btn-primary" (click)="addCategory()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -30,30 +30,13 @@
 
       <!-- Create Category Form -->
       @if (showCreateForm()) {
-        <form class="category-form card" (ngSubmit)="createCategory()" #form="ngForm">
-          <div class="form-group">
-            <input
-              class="input"
-              type="text"
-              [value]="newCategory().name"
-              (input)="updateNewCategoryName($event)"
-              name="name"
-              placeholder="Category name"
-              required
-              #nameInput>
-            <textarea
-              class="textarea"
-              [value]="newCategory().description"
-              (input)="updateNewCategoryDescription($event)"
-              name="description"
-              placeholder="Description (optional)"
-              rows="2"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="!form.valid">Create</button>
-            <button type="button" class="btn btn-secondary" (click)="cancelCreate()">Cancel</button>
-          </div>
-        </form>
+        <app-edit-category-form
+          [userId]="currentUser()?.id || ''"
+          [categoryId]="categoryId() || ''"
+          [categoryData]="newCategory"
+          (formSaved)="handleFormSaved($event)"
+          (cancelEdit)="handleCancelEdit()"
+        ></app-edit-category-form>
       }
 
       <!-- Categories Grid -->
@@ -78,10 +61,7 @@
             </div>
             <div class="category-content">
               <p>{{ category.description || 'No description' }}</p>
-              <div class="category-stats">
-                <span class="stat">{{ getCategoryStats(category.id || '').groupCount }} groups</span>
-                <span class="stat">{{ getCategoryStats(category.id || '').noteCount }} notes</span>
-              </div>
+            
             </div>
             <div class="category-footer">
               <small>Updated {{ formatDate(category.updated_at) }}</small>
@@ -96,7 +76,7 @@
             </div>
             <h3>No categories yet</h3>
             <p>Create your first category to organize your notes!</p>
-            <button class="create-note-btn btn btn-primary" (click)="showCreateForm.set(true)">
+            <button class="create-note-btn btn btn-primary" (click)="addCategory()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>

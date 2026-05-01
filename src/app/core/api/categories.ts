@@ -25,7 +25,7 @@ export async function addCategory(userId: string, name: string, description: str
 
 export async function editCategory(categoryId: string, name: string, description: string): Promise<void> {
     try {
-        await invoke("edit_category", { categoryId, name, description });
+        await invoke("update_category", { categoryId, name, description });
     } catch (error: any) {
         console.error('Error editing category:', error);
         return Promise.reject(error);

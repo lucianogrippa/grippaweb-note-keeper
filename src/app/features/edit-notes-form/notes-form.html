@@ -1,0 +1,55 @@
+<form class="note-form card" (ngSubmit)="addEditNote()" #form="ngForm">
+  <div class="form-group">
+    <input
+      class="input"
+      type="text"
+      [value]="noteData().title"
+      (input)="updateNewNoteTitle($event)"
+      name="title"
+      placeholder="Note title"
+      required
+      #titleInput
+    />
+    <textarea
+      class="textarea"
+      [value]="noteData().content"
+      (input)="updateNewNoteContent($event)"
+      name="content"
+      placeholder="Write your note content..."
+      rows="6"
+      required
+    ></textarea>
+
+    <div class="encryption-toggle">
+      <label class="toggle-label">
+        <input
+          type="checkbox"
+          [checked]="noteData().is_encrypted"
+          (change)="toggleEncryption()"
+          class="toggle-input"
+        />
+        <span class="toggle-slider"></span>
+        <span class="toggle-text">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M19 11H5M12 4L5 11L12 18"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Encrypt this note
+        </span>
+      </label>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="!form.valid">
+      Create Note
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="cancelCreate()">
+      Cancel
+    </button>
+  </div>
+</form>

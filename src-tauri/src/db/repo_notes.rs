@@ -1,6 +1,5 @@
 use crate::{entities::categories::Note, management::NoteManager};
 use anyhow::{Context, Result};
-use serde::de;
 
 
 pub async fn get_all_notes_by_group_id(
@@ -8,12 +7,11 @@ pub async fn get_all_notes_by_group_id(
     pool: &sqlx::Pool<sqlx::Sqlite>,
 ) -> Result<Vec<Note>, anyhow::Error> {
     let notes = sqlx::query_as::<_, Note>(
-            "SELECT notes.id, notes.group_id, notes.title,IIF(is_encrypted = 1, notes.content, '***') as content, groups.name as group_name, notes.created_at, notes.updated_at FROM notes join groups ON notes.group_id = groups.id WHERE notes.group_id = ? ORDER BY notes.created_at DESC",
+            "SELECT notes.id, notes.groups_id, notes.title,IIF(is_encrypted = 1, notes.content, '***') as content, groups.name as group_name, notes.created_at, notes.updated_at FROM notes join groups ON notes.groups_id = groups.id WHERE notes.groups_id = ? ORDER BY notes.created_at DESC",
         )
         .bind(group_id)
         .fetch_all(pool)
-        .await
-        .context("Failed to retrieve notes from database")?;
+        .await?;
     Ok(notes)
 }
 
@@ -71,14 +69,14 @@ pub async fn create_note(
         content.to_string()
     };
 
-    sqlx::query("INSERT INTO notes (group_id, title, content, is_encrypted) VALUES (?, ?, ?, ?)")
+    print!("Creating note with encrypted content: {} group_id: {}", encrypted_content, group_id);
+    sqlx::query("INSERT INTO notes (groups_id, title, content, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP   )")
         .bind(group_id)
         .bind(title)
         .bind(encrypted_content)
         .bind(is_encrypted)
         .execute(pool)
-        .await
-        .context("Failed to insert note into database")?;
+        .await?;
     Ok(())
 }
 pub async fn update_note(

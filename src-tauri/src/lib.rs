@@ -7,6 +7,7 @@ use crate::commands::auth;
 use crate::commands::profile;
 use crate::commands::categories;
 use crate::commands::groups;
+use crate::commands::notes;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use tauri::Manager;
@@ -43,6 +44,11 @@ pub fn run() {
             groups::add_group_in_category,
             groups::edit_group,
             groups::delete_group,
+            notes::get_notes_by_group,
+            notes::find_note_by_id,
+            notes::add_note_in_group,
+            notes::edit_note,
+            notes::delete_note,
         ])
         .setup(|app| {
             // manage application state for database connection pool and encryption key
