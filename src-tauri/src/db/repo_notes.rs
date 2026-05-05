@@ -7,7 +7,7 @@ pub async fn get_all_notes_by_group_id(
     pool: &sqlx::Pool<sqlx::Sqlite>,
 ) -> Result<Vec<Note>, anyhow::Error> {
     let notes = sqlx::query_as::<_, Note>(
-            "SELECT notes.id, notes.groups_id AS group_id, groups.name AS group_name, notes.title,  notes.content AS content, notes.is_encrypted, notes.created_at, notes.updated_at FROM notes JOIN groups ON notes.groups_id = groups.id WHERE notes.groups_id = ? ORDER BY notes.created_at DESC",
+            "SELECT notes.id, notes.groups_id AS group_id, groups.name AS group_name, notes.title,IIF(notes.is_encrypted = 0, notes.content, '***') AS content, notes.is_encrypted, notes.created_at, notes.updated_at FROM notes JOIN groups ON notes.groups_id = groups.id WHERE notes.groups_id = ? ORDER BY notes.created_at DESC",
         )
         .bind(group_id)
         .fetch_all(pool)

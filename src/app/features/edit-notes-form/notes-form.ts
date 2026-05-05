@@ -3,6 +3,8 @@ import { DataService } from '../../core/data.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { message } from '@tauri-apps/plugin-dialog';
+import { Spinner } from '../../shared/services/spinner';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-notes-form',
@@ -12,16 +14,16 @@ import { message } from '@tauri-apps/plugin-dialog';
   styleUrl: './notes-form.css',
 })
 export class EditNotesForm {
- 
-@Input()
-noteId: string = '';
 
-@Input()
-groupId: string = '';
+  @Input()
+  noteId: string = '';
+
+  @Input()
+  groupId: string = '';
 
 
-@Input()
-noteData = signal({
+  @Input()
+  noteData = signal({
     id: '',
     title: '',
     content: '',
@@ -32,6 +34,7 @@ noteData = signal({
   @Output() cancelEdit = new EventEmitter<void>();
 
   private readonly dataService = inject(DataService);
+  private readonly spinner = inject(Spinner);
 
   updateNewNoteTitle(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -48,7 +51,7 @@ noteData = signal({
   }
 
   addEditNote(): void {
-    if(this.noteId) {
+    if (this.noteId) {
       this.editNote();
     } else {
       this.createNote();
@@ -56,66 +59,69 @@ noteData = signal({
   }
 
   editNote(): void {
-    const id= this.noteId;
+    const id = this.noteId;
     const note = this.noteData();
     const title = note.title.trim();
     const content = note.content.trim();
     const groupId = this.groupId;
     const isEncrypted = note.is_encrypted;
-  
+
     if (title && content && groupId) {
-      
+
       // check in title and content potezialy vulnerability
       const invalidChars = ['<', '>', ';', '--'];
-      if(invalidChars.some(char => title.includes(char) || content.includes(char))) {
-        message('Title and content cannot contain invalid characters like <, >, ;, --',{
-          kind:'error',
+      if (invalidChars.some(char => title.includes(char) || content.includes(char))) {
+        message('Title and content cannot contain invalid characters like <, >, ;, --', {
+          kind: 'error',
           title: 'Validation Error'
         });
         return;
       }
-      
+
+      this.spinner.show();
       // Call the updateNote method in the data service
       this.dataService.updateNote(
         id,
         title,
         content,
-        isEncrypted 
-      ).subscribe({
-        next: () => {
-          this.formSaved.emit(true);
-        },
-        error: (error) => {
-          console.error('Error updating note:', error);
-          message('Failed to update note. Please try again.', {
-            kind: 'error',
-            title: 'Update Error'
-          });
-        }
-      });
+        isEncrypted
+      )
+        .pipe(finalize(() => this.spinner.hide()))
+        .subscribe({
+          next: () => {
+            this.formSaved.emit(true);
+          },
+          error: (error) => {
+            console.error('Error updating note:', error);
+            message('Failed to update note. Please try again.', {
+              kind: 'error',
+              title: 'Update Error'
+            });
+          }
+        });
     }
   }
 
-   createNote(): void {
-      const note = this.noteData();
-      const title = note.title.trim();
-      const content = note.content.trim();
-      const groupId = this.groupId;
-  
-      if (title && content && groupId) {
+  createNote(): void {
+    const note = this.noteData();
+    const title = note.title.trim();
+    const content = note.content.trim();
+    const groupId = this.groupId;
 
-        // check in title and content potezialy vulnerability
-        const invalidChars = ['<', '>', ';', '--'];
-        if(invalidChars.some(char => title.includes(char) || content.includes(char))) {
-          message('Title and content cannot contain invalid characters like <, >, ;, --',{
-            kind:'error',
-            title: 'Validation Error'
-          });
-          return;
-        }
+    if (title && content && groupId) {
+
+      // check in title and content potezialy vulnerability
+      const invalidChars = ['<', '>', ';', '--'];
+      if (invalidChars.some(char => title.includes(char) || content.includes(char))) {
+        message('Title and content cannot contain invalid characters like <, >, ;, --', {
+          kind: 'error',
+          title: 'Validation Error'
+        });
+        return;
+      }
 
       // check min and max characters
-      if(title.length < 5 || title.length > 150) {  
+      if (title.length < 5 || title.length > 150) {
         message('Title must be between 5 and 150 characters.', {
           kind: 'error',
           title: 'Validation Error'
@@ -123,7 +129,7 @@ noteData = signal({
         return;
       }
 
-      if(content.length < 10 || content.length > 500) {
+      if (content.length < 10 || content.length > 500) {
         message('Content must be between 10 and 500 characters.', {
           kind: 'error',
           title: 'Validation Error'
@@ -131,9 +137,13 @@ noteData = signal({
         return;
       }
 
-        this.dataService.createNote(groupId,title, content, note.is_encrypted).subscribe({
+      this.spinner.show();
+      this.dataService.createNote(groupId, title, content, note.is_encrypted)
+
+        .pipe(finalize(() => this.spinner.hide()))
+        .subscribe({
           next: () => {
-            this.noteData.set({id:'', title: '', content: '', is_encrypted: false });
+            this.noteData.set({ id: '', title: '', content: '', is_encrypted: false });
             this.formSaved.emit(true);
           },
           error: (error) => {
@@ -144,10 +154,10 @@ noteData = signal({
             });
           }
         });
-      }
     }
+  }
 
-    cancelCreate(): void {
-      this.cancelEdit.emit();
-    }
+  cancelCreate(): void {
+    this.cancelEdit.emit();
+  }
 }

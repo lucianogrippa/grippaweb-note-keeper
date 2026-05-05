@@ -31,7 +31,7 @@ export class NavbarComponent {
     notes: [],
     totalResults: 0
   });
-  isSearchOpen = signal(false);
+  isSearchOpen = signal(true);
   isSearching = signal(false);
   
   toggleMenu(): void {

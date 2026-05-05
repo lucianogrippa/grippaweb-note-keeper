@@ -7,22 +7,27 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 import { finalize, map, tap } from 'rxjs';
 import { EditNotesForm } from '../edit-notes-form/notes-form';
 import { ask, message } from '@tauri-apps/plugin-dialog';
+import { getNoteById } from '../../core/api/notes';
+import { Spinner } from '../../shared/services/spinner';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-group-detail',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FormsModule, EditNotesForm],
+  imports: [CommonModule, NavbarComponent, FormsModule, EditNotesForm, DialogModule, ButtonModule],
   templateUrl: './group-detail.component.html',
   styleUrl: './group-detail.component.css'
 })
 export class GroupDetailComponent implements OnInit {
 
   protected totalNotes = signal(0);
-
+  protected showPreview = false;
   protected router = inject(Router);
+  protected previewNote = signal<Note | null>(null);
   private dataService = inject(DataService);
   private route = inject(ActivatedRoute);
-
+  private readonly spinner = inject(Spinner);
 
   groupId = signal<string>('');
   noteId = signal<string>('');
@@ -106,10 +111,19 @@ export class GroupDetailComponent implements OnInit {
   }
 
   viewNote(noteId: string): void {
-    this.editNote(noteId);
-  }
-
-
+    this.previewNote.set(null);
+    this.spinner.show();
+    getNoteById(noteId).then(note => {
+      if (note) {
+        this.showPreview = true;
+        this.previewNote.set(note);
+      } else {
+        message('Note not found', { title: 'Error', kind: 'error' });
+      }
+    }).finally(() => {
+      this.spinner.hide();
+    });
+  } 
 
   cancelCreate(): void {
     this.showCreateForm.set(false);
@@ -192,7 +206,12 @@ export class GroupDetailComponent implements OnInit {
   }
   editNote(noteId: string): void {
     this.noteId.set(noteId);
-    this.dataService.getNoteById(noteId).subscribe({
+
+    this.spinner.show();
+    
+    this.dataService.getNoteById(noteId)
+    .pipe(finalize(() => this.spinner.hide()))
+    .subscribe({
       next: (note) => {
         if (note) {
           this.newNote.set({

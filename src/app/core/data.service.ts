@@ -287,7 +287,6 @@ export class DataService {
  
     return from(getNotesByGroup(groupId))
       .pipe(switchMap(notes => {
-           debugger;
         this.notes.set(notes);
         this.notesSubject.next(notes);
         return new Observable<Note[]>(observer => {

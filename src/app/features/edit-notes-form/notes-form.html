@@ -24,10 +24,9 @@
       required
     ></textarea>
 
-    <div class="encryption-toggle hide">
+    <div class="encryption-toggle">
       <label class="toggle-label">
         <input
-          disabled
           type="checkbox"
           [checked]="noteData().is_encrypted"
           (change)="toggleEncryption()"

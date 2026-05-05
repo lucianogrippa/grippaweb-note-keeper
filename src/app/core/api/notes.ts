@@ -1,9 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { Note } from "../data.service";
 
-export async function getNoteById(noteId: string): Promise<Note | null> {
+export async function getNoteById(noteId: string, decryptContent: boolean= true): Promise<Note | null> {
   try {
-    const note = await invoke<Note>("find_note_by_id", { noteId, decryptContent: false });
+    const note = await invoke<Note>("find_note_by_id", { noteId, decryptContent });
     if (note) {
       return note;
     }

@@ -1,6 +1,6 @@
 use tauri::State;
 
-use crate::{AppState, db::repo_notes::{create_note, get_all_notes_by_group_id}, entities::categories::Note};
+use crate::{AppState, db::{repo_notes::{create_note, get_all_notes_by_group_id}, repo_users::find_user_profile}, entities::categories::Note};
 
 #[tauri::command]
 pub async fn get_notes_by_group(
@@ -24,8 +24,12 @@ pub async fn find_note_by_id(
     let pool = state.pool.read().await;
     let pool = pool.as_ref().ok_or("Database pool not initialized")?;
 
-    let encryption_key = state.encryption_key.read().await;
-    let encryption_key = encryption_key.as_ref().ok_or("Encryption key not available")?;
+     let user_profile = find_user_profile(pool)
+        .await
+        .map_err(|e| format!("Failed to find user profile: {}", e))?
+        .ok_or("User profile not found")?;
+
+    let encryption_key = user_profile.note_password_hash.as_bytes();
 
     crate::db::repo_notes::get_note_by_id(note_id.as_str(), decrypt_content, encryption_key, pool)
         .await
@@ -42,8 +46,13 @@ pub async fn add_note_in_group(
 ) -> Result<String, String> {
     let pool = state.pool.read().await;
     let pool = pool.as_ref().ok_or("Database pool not initialized")?;
-    let encryption_key = state.encryption_key.read().await;
-    let encryption_key = encryption_key.as_ref().ok_or("Encryption key not available")?;
+    
+    let user_profile = find_user_profile(pool)
+        .await
+        .map_err(|e| format!("Failed to find user profile: {}", e))?
+        .ok_or("User profile not found")?;
+
+    let encryption_key = user_profile.note_password_hash.as_bytes();
 
     let note_id = create_note(&group_id, &title, &content, is_encrypted, encryption_key, pool)
         .await
@@ -65,8 +74,13 @@ pub async fn edit_note(
 ) -> Result<(), String> {
     let pool = state.pool.read().await;
     let pool = pool.as_ref().ok_or("Database pool not initialized")?;
-    let encryption_key = state.encryption_key.read().await;
-    let encryption_key = encryption_key.as_ref().ok_or("Encryption key not available")?;
+    
+    let user_profile = find_user_profile(pool)
+        .await
+        .map_err(|e| format!("Failed to find user profile: {}", e))?
+        .ok_or("User profile not found")?;
+
+    let encryption_key = user_profile.note_password_hash.as_bytes();
 
     crate::db::repo_notes::update_note(note_id.as_str(), &title, &content, is_encrypted, encryption_key, pool)
         .await
