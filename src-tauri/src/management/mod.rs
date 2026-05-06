@@ -94,17 +94,30 @@ impl KeyManager {
 
 impl NoteManager {
     pub fn encrypt_content(content: &str, key: &[u8]) -> Result<String, anyhow::Error> {
-        let key = hex::encode(key);
-        encrypt(&key, content.as_bytes()).map_err(|e| anyhow::anyhow!(e.to_string()))
+        // key may be either raw bytes or an ASCII hex string (stored note password hash).
+        let key_str = match std::str::from_utf8(key) {
+            Ok(s) if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) => s.to_string(),
+            _ => hex::encode(key),
+        };
+
+        encrypt(&key_str, content.as_bytes()).map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
     pub fn decrypt_content(encrypted_content: &str, key: &[u8]) -> Result<String, anyhow::Error> {
-        let key = hex::encode(key);
-        decrypt(&key, encrypted_content)
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
-            .and_then(|bytes| {
-                String::from_utf8(bytes)
-                    .map_err(|e| anyhow::anyhow!(format!("Failed to decode decrypted content as UTF-8: {}", e)))
-            })
+        let key_str = match std::str::from_utf8(key) {
+            Ok(s) if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) => s.to_string(),
+            _ => hex::encode(key),
+        };
+
+        let res = decrypt(&key_str, encrypted_content).map_err(|e| {
+            let s = e.to_string();
+            if s.contains("aead::Error") || s.contains("authentication") {
+                anyhow::anyhow!("Decryption failed: authentication failed (wrong key or corrupted ciphertext)")
+            } else {
+                anyhow::anyhow!(s)
+            }
+        })?;
+
+        String::from_utf8(res).map_err(|e| anyhow::anyhow!(format!("Failed to decode decrypted content as UTF-8: {}", e)))
     }
 }

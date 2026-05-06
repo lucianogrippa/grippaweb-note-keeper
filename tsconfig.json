@@ -14,7 +14,8 @@
     "importHelpers": true,
     "composite": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

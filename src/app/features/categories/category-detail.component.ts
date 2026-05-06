@@ -6,6 +6,7 @@ import { Observable, map } from 'rxjs';
 import { DataService, Group } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { EditGroupForm } from '../edit-group-form/edit-group-form';
+import { ask, message } from '@tauri-apps/plugin-dialog';
 
 @Component({
   selector: 'app-category-detail',
@@ -98,17 +99,21 @@ export class CategoryDetailComponent implements OnInit {
     this.groupData.set(null);
   }
 
-  deleteGroup(groupId: string): void {
+  async deleteGroup(groupId: string): Promise<void> {
     const group = this.groups().find(g => g.id === groupId);
     const groupName = group?.name || 'this group';
 
-    if (confirm(`Are you sure you want to delete "${groupName}" and all its notes?`)) {
+    if (await ask(`Are you sure you want to delete "${groupName}" and all its notes?`)) {
       this.dataService.deleteGroup(groupId).subscribe({
         next: () => {
           console.log('Group deleted successfully');
         },
         error: (error) => {
           console.error('Error deleting group:', error);
+          message("Failed to delete group. Please try again. Be sure to delete all note inside the group.",{
+            title: "Error",
+            kind: "error"
+          });
         }
       });
     }

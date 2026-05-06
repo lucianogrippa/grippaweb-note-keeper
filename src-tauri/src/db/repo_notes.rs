@@ -31,14 +31,32 @@ pub async fn get_note_by_id(
         .await
         .context("Failed to retrieve note from database")?;
 
+        // mesure the time taken to decrypt the content
+        let start_time = std::time::Instant::now();
         // Decrypt the content if it's encrypted
         if note.is_encrypted {
-            let decrypted_content = NoteManager::decrypt_content(&note.content, encryption_key)?;
-            let decrypted_note = Note {
-                content: decrypted_content,
-                ..note
-            };
-            return Ok(decrypted_note);
+            match NoteManager::decrypt_content(&note.content, encryption_key) {
+                Ok(decrypted_content) => {
+                    let decrypted_note = Note {
+                        content: decrypted_content,
+                        ..note
+                    };
+                    let duration = start_time.elapsed();
+                    println!("Time taken to decrypt note content: {:?}", duration);
+                    return Ok(decrypted_note);
+                }
+                Err(e) => {
+                    // Log helpful diagnostics to aid debugging (don't expose plaintext)
+                    println!(
+                        "Decryption failed for note {}: {}; content starts_with v2: {}, content_len: {}",
+                        note_id,
+                        e,
+                        note.content.starts_with("v2:"),
+                        note.content.len()
+                    );
+                    return Err(e);
+                }
+            }
         }
 
         return Ok(note);
@@ -62,7 +80,7 @@ pub async fn create_note(
     is_encrypted: bool,
     encryption_key: &[u8],
     pool: &sqlx::Pool<sqlx::Sqlite>,
-) -> Result<(), anyhow::Error> {
+) -> Result<String, anyhow::Error> {
     let encrypted_content = if is_encrypted {
         NoteManager::encrypt_content(content, encryption_key)?
     } else {
@@ -70,14 +88,16 @@ pub async fn create_note(
     };
 
     print!("Creating note with encrypted content: {} group_id: {}", encrypted_content, group_id);
-    sqlx::query("INSERT INTO notes (groups_id, title, content, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP   )")
+    let result = sqlx::query("INSERT INTO notes (groups_id, title, content, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP   )")
         .bind(group_id)
         .bind(title)
         .bind(encrypted_content)
         .bind(is_encrypted)
         .execute(pool)
         .await?;
-    Ok(())
+    
+    let note_id = result.last_insert_rowid().to_string();
+    Ok(note_id)
 }
 pub async fn update_note(
     note_id: &str,

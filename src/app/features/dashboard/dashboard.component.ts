@@ -8,6 +8,7 @@ import { AuthService } from '../../core/auth.service';
 import { DataService, Category } from '../../core/data.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { EditCategoryForm } from '../edit-category-form/edit-category-form';
+import { ask, message } from '@tauri-apps/plugin-dialog';
 
 @Component({
   selector: 'app-dashboard',
@@ -101,17 +102,20 @@ export class DashboardComponent implements OnInit {
     this.dataService.loadCategories();
   }
 
-  deleteCategory(categoryId: string): void {
+  async deleteCategory(categoryId: string): Promise<void> {
     const category = this.categories().find(c => c.id === categoryId);
     const categoryName = category?.name || 'this category';
     
-    if (confirm(`Are you sure you want to delete "${categoryName}" and all its groups and notes?`)) {
+    if (await ask(`Are you sure you want to delete "${categoryName}" and all its groups and notes?`)) {
       this.dataService.deleteCategory(categoryId).subscribe({
         next: () => {
           console.log('Category deleted successfully');
         },
         error: (error) => {
-          console.error('Error deleting category:', error);
+          message("Failed to delete category. Please try again. Be sure to delete all group and note inside the category.",{
+            title: "Error",
+            kind: "error"
+          });
         }
       });
     }

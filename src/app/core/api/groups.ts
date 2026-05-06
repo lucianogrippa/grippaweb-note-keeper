@@ -28,8 +28,7 @@ export async function deleteGroup(groupId: string): Promise<boolean> {
     await invoke("delete_group", { groupId });
     return true;
   } catch (error: any) {
-    console.error('Error deleting group:', error);
-    return false;
+    throw error;
   }
 }
 

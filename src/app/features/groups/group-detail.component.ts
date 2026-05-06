@@ -28,6 +28,7 @@ export class GroupDetailComponent implements OnInit {
   private dataService = inject(DataService);
   private route = inject(ActivatedRoute);
   private readonly spinner = inject(Spinner);
+  private refreshTrigger = signal(0);
 
   groupId = signal<string>('');
   noteId = signal<string>('');
@@ -45,8 +46,10 @@ export class GroupDetailComponent implements OnInit {
   });
 
   notes = computed(() => {
-    console.log("Loading notes for group:", this.groupId());
+    console.log("Loading notes for group:", this.groupId(), "refresh trigger:", this.refreshTrigger());
     const id = this.groupId();
+    // Access refreshTrigger to create dependency on it
+    this.refreshTrigger();
     return this.dataService.getNotesByGroup(id).pipe(
       tap(r => {
         this.totalNotes.set(r.length);
@@ -182,10 +185,11 @@ export class GroupDetailComponent implements OnInit {
     }
   }
   private reloadNote() {
+    this.isLoaded.set(false);
+    this.refreshTrigger.update(n => n + 1);
     this.notes()
       .pipe(finalize(() => {
         this.isLoaded.set(true);
-        window.location.reload();
       }))
       .subscribe({
         next: (notes) => {
@@ -209,7 +213,7 @@ export class GroupDetailComponent implements OnInit {
 
     this.spinner.show();
     
-    this.dataService.getNoteById(noteId)
+    this.dataService.fetchNoteById(noteId)
     .pipe(finalize(() => this.spinner.hide()))
     .subscribe({
       next: (note) => {

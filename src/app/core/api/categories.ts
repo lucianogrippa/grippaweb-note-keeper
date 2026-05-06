@@ -56,7 +56,6 @@ export async function deleteCategoryById(categoryId: string): Promise<void> {
     try {
         await invoke("delete_category_by_id", { categoryId });
     } catch (error: any) {
-        console.error('Error deleting category:', error);
-        return Promise.reject(error);
+        throw error;
     }
 }

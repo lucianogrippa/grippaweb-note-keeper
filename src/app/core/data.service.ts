@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { BehaviorSubject, from, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, from, Observable, switchMap, tap,map, catchError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { User } from './models';
 import { addCategory, deleteCategoryById, editCategory, findCategoryById, getCategoriesByUser } from './api/categories';
@@ -205,6 +205,13 @@ export class DataService {
   createGroup(categoryId: string, name: string): Observable<Group> {
     return from(createGroup({ name, categories_id: categoryId }))
       .pipe(
+        catchError(error => {
+          console.error('Error creating group:', error);
+          return new Observable<Group>(observer => {
+            observer.error('Failed to create group');
+            observer.complete();
+          });
+        }),
         switchMap(() => loadGroupsByCategory(categoryId)),
         switchMap(groups => {
           this.groups.set(groups);
@@ -227,6 +234,13 @@ export class DataService {
   updateGroup(id: string, name: string): Observable<Group> {
     return from(updateGroup({ id, name } as Group))
       .pipe(
+        catchError(error => {
+          console.error('Error updating group:', error);
+          return new Observable<Group>(observer => {
+            observer.error('Failed to update group');
+            observer.complete();
+          });
+        }),
         switchMap(() => {
           const group = this.getGroupById(id);
           if (group) {
@@ -260,6 +274,13 @@ export class DataService {
   deleteGroup(id: string): Observable<boolean> {
     return from(deleteGroup(id))
       .pipe(
+        catchError(error => {
+          console.error('Error deleting group:', error);
+          return new Observable<boolean>(observer => {
+            observer.error('Failed to delete group');
+            observer.complete();
+          });
+        }),
         switchMap(() => {
           const group = this.getGroupById(id);
           if (group) {
@@ -296,8 +317,8 @@ export class DataService {
       }));
   }
 
-  getNoteById(id: string): Observable<Note | null> {
-    return from(getNoteById(id))
+  fetchNoteById(id: string, decript:boolean = true): Observable<Note | null> {
+    return from(getNoteById(id, decript))
     .pipe(switchMap(note => {
       if (note) {
         return new Observable<Note>(observer => {
@@ -317,31 +338,37 @@ export class DataService {
   createNote(groupId: string, title: string, content: string, isEncrypted: boolean = false): Observable<Note> {
     return from(createNote({ title, content, is_encrypted: isEncrypted, group_id: groupId }))
       .pipe(
-        switchMap(() => {
-          return this.getNotesByGroup(groupId);
-        }),
-        switchMap(notes => {
-  
-          this.notes.set(notes);
-          this.notesSubject.next(notes);
-          const createdNote = notes.find(n => n.title === title && n.content === content);
-          if (createdNote) {
+        switchMap((newNoteId) => {
+          if (!newNoteId) {
             return new Observable<Note>(observer => {
-              observer.next(createdNote);
-              observer.complete();
-            });
-          } else {
-            return new Observable<Note>(observer => {
-              observer.error('Created note not found after refresh');
+              observer.error('Failed to create note: no ID returned');
               observer.complete();
             });
           }
+
+          const createdNote: Note = {
+            id: newNoteId,
+            groups_id: groupId,
+            title,
+            content,
+            is_encrypted: isEncrypted,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          return from(this.getNotesByGroup(groupId)).pipe(
+            tap(notes => {
+              this.notes.set(notes);
+              this.notesSubject.next(notes);
+            }),
+            map(() => createdNote)
+          );
         })
       );
   }
 
   updateNote(id: string, title: string, content: string, isEncrypted?: boolean): Observable<Note> {
-    return from(this.getNoteById(id))
+    return from(this.fetchNoteById(id))
       .pipe(
         switchMap(note => {
           if (note) {
@@ -353,7 +380,7 @@ export class DataService {
             });
           }
         }),
-        switchMap(() => from(this.getNoteById(id))),
+        switchMap(() => from(this.fetchNoteById(id))),
         switchMap((updatedNote) => {
           if (updatedNote) {
             return new Observable<Note>(observer => {
@@ -371,11 +398,18 @@ export class DataService {
   }
 
   deleteNote(id: string): Observable<boolean> {
-    return from(this.getNoteById(id))
+    return from(this.fetchNoteById(id, false))
       .pipe(
         switchMap(note => {
           if (note) {
             return from(deleteNote(id))
+              .pipe(catchError(error => {
+                console.error('Error deleting note:', error);
+                return new Observable<boolean>(observer => {
+                  observer.error('Failed to delete note');
+                  observer.complete();
+                });
+              }))
               .pipe(
                 switchMap(() => {
                   const notes = this.getNotesByGroup(note.groups_id);

@@ -23,11 +23,16 @@ pub async fn find_note_by_id(
 ) -> Result<Note, String> {
     let pool = state.pool.read().await;
     let pool = pool.as_ref().ok_or("Database pool not initialized")?;
+    
+    // mesure the time taken to find the user profile
+    let start_time = std::time::Instant::now();
+    let user_profile = find_user_profile(pool)
+    .await
+    .map_err(|e| format!("Failed to find user profile: {}", e))?
+    .ok_or("User profile not found")?;
 
-     let user_profile = find_user_profile(pool)
-        .await
-        .map_err(|e| format!("Failed to find user profile: {}", e))?
-        .ok_or("User profile not found")?;
+    let duration = start_time.elapsed();
+    println!("Time taken to find user profile: {:?}", duration);
 
     let encryption_key = user_profile.note_password_hash.as_bytes();
 
@@ -59,7 +64,7 @@ pub async fn add_note_in_group(
         .map_err(|e| format!("Failed to add note: {}", e));
 
     match note_id {
-        Ok(()) => Ok("OK".to_string()),
+        Ok(id) => Ok(id),
         Err(e) => Err(format!("Failed to add note: {}", e)),
     }
 }
