@@ -15,4 +15,22 @@ class Account extends User {
 
   Account(this.token, this.login, this.expireDate,
       {required super.name, required super.lastname, required super.username, required super.email});
+
+  factory Account.empty() =>
+      Account('', DateTime.now(), DateTime.now(), name: '',
+          lastname: '',
+          username: '',
+          email: '');
+
+  factory Account.mokAdmin() =>
+      Account('token', DateTime.now(), DateTime.now().add(Duration(days: 5)),
+          name: 'Admin',
+          lastname: 'User',
+          username: 'admin',
+          email: 'admin@prova');
+
+  bool isNotEmptyAccount() {
+    return this.token != '' && this.name != '' && this.lastname != '' &&
+        this.email != '' && this.username != '';
+  }
 }

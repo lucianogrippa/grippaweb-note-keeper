@@ -10,7 +10,7 @@ abstract class IAccountService {
   Future<Account> login(String username,String password);
 
   /// Logout from session and remove stored temporary token from cache
-  Future<void> logout();
+  Future<AuthState> logout();
 
 
   Future<AuthState> checkSession();
@@ -21,22 +21,42 @@ abstract class IAccountService {
 
 class AccountService implements IAccountService {
 
+  bool  hasToken = false;
+
+  /// Check if user is authenticated in session
   @override
-  Future<AuthState> checkSession() {
-    // TODO: implement checkSession
-    throw UnimplementedError();
+  Future<AuthState> checkSession() async{
+    /// TODO: call authentication
+
+    return await verifyToken() ?
+                      Future.syncValue(AuthState.authenticated()) :
+                      Future.syncValue(AuthState.unauthenticated());
+
   }
 
   @override
   Future<Account> login(String username, String password  ) {
-    // TODO: implement login
-    throw UnimplementedError();
+
+    //TODO: Mocked Values
+    if(username == 'admin' && password=='admin') {
+      hasToken = true;
+      return Future.syncValue(Account.mokAdmin());
+    }
+
+    hasToken = false;
+    return Future.syncValue(Account.empty());
   }
 
   @override
-  Future<void> logout() {
-    // TODO: implement logout
-    throw UnimplementedError();
+  Future<AuthState> logout() {
+
+    /// TODO: mocked values
+      hasToken = false;
+
+      return Future.syncValue(AuthState.unauthenticated());
   }
 
+  Future<bool> verifyToken() {
+    return Future.syncValue(hasToken);
+  }
 }
