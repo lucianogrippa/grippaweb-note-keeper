@@ -1,0 +1,5 @@
+{
+  "appId": "com.grippaweb.notekeeper",
+  "appName": "note-keeper",
+  "webDir": "dist/note-keeper/browser"
+}
