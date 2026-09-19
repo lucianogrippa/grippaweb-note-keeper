@@ -140,6 +140,7 @@
 select.form-control option {
   background: var(--bg-primary);
   color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary)
 }
 
 select.form-control {

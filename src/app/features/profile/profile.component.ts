@@ -7,6 +7,9 @@ import { ThemeService, Theme } from '../../core/theme.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ask, confirm, open } from '@tauri-apps/plugin-dialog';
 import { Notification } from '../../services/notification';
+import { Spinner } from '../../shared/services/spinner';
+import { updateUserProfile } from '../../core/api/profiles';
+import { finalize, from } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -20,6 +23,7 @@ export class ProfileComponent implements OnInit {
   public themeService = inject(ThemeService);
   private notificationService = inject(Notification);
   private router = inject(Router);
+  private readonly spinner= inject(Spinner);
 
   currentUser = computed(() => this.authService.currentUser());
 
@@ -169,15 +173,25 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    this.spinner.show();
     this.isSaving.set(true);
 
-    // Here you would integrate with your auth service to update the profile
-    // For now, we'll simulate an API call
-    setTimeout(() => {
-      console.log('Profile updated:', form);
-      this.isEditing.set(false);
-      this.isSaving.set(false);
-    }, 1000);
+    from(updateUserProfile(form.full_name))
+    .pipe(finalize(() => {
+      this.spinner.hide();
+    }))
+    .subscribe({
+      next: (updatedUser) => {
+        this.notificationService.showNotification('Profile Updated', 'Your profile has been updated successfully.');
+        this.isEditing.set(false);
+        this.isSaving.set(false);
+      },
+      error: (error) => {
+        console.error('Error updating profile:', error);
+        alert('Failed to update profile. Please try again.');
+        this.isSaving.set(false);
+      }
+    });
   }
 
   changePassword(): void {

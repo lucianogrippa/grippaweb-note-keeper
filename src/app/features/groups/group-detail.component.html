@@ -108,7 +108,7 @@
   </main>
 </div>
 
-<p-dialog header="Header" [modal]="true" [(visible)]="showPreview" [style]="{ width: '50rem' }"
+<p-dialog header="{{ previewNote()?.title }}" [modal]="true" [(visible)]="showPreview" [style]="{ width: '50rem' }"
   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [maximizable]="true">
 
   @if(previewNote()) {

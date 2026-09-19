@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { User } from "../models";
 import { open } from "@tauri-apps/plugin-dialog";
 
+
+
 export async function isDbExist(): Promise<boolean> {
   try {
     const db_exist = await invoke('is_db_exist');
@@ -60,9 +62,9 @@ export async function register(setupData: { full_name: string; note_password: st
   }
 }
 
-export async function updateUserProfile(profileData: { full_name?: string; note_password?: string; master_password?: string }): Promise<User> {
+export async function updateUserProfile(full_name?: string): Promise<User> {
   try {
-    return await invoke("update_user_profile", profileData);
+    return await invoke("save_user_profile", { fullName : full_name});
   } catch (error: any) {
     console.error('Error during user profile update:', error);
     return Promise.reject(error);

@@ -52,18 +52,18 @@
             />
           </div>
 
-          <div class="form-group">
+          <div class="form-group hide">
             <label for="note-password">Note Encryption Password</label>
             <input
               id="note-password"
               type="password"
               class="form-control"
+              disabled
               [value]="profileForm().note_password"
-              [disabled]="!isEditing()"
               (input)="updateNotePassword($event)"
               placeholder="Password for encrypting notes"
             />
-            <p class="form-help">Used to encrypt/decrypt your private notes</p>
+            <p class="form-help">The password is private and will not be shared with anyone</p>
           </div>
 
           <div class="form-actions" *ngIf="isEditing()">
@@ -86,90 +86,9 @@
         </div>
       </section>
 
-      <!-- Security Section -->
-      <section class="profile-section">
-        <div class="section-header">
-          <h2><i class="fas fa-shield-alt"></i> Security</h2>
-          <button 
-            class="btn btn-primary"
-            (click)="showPasswordChange.set(!showPasswordChange())"
-          >
-            <i class="fas fa-key"></i> Change Password
-          </button>
-        </div>
-
-        <div class="section-content">
-          <div class="security-info">
-            <div class="security-item">
-              <i class="fas fa-check-circle text-success"></i>
-              <span>Password last changed: {{ currentUser()?.updated_at | date:'mediumDate' }}</span>
-            </div>
-            <div class="security-item">
-              <i class="fas fa-check-circle text-success"></i>
-              <span>Two-factor authentication: Not configured</span>
-            </div>
-          </div>
-
-          <div class="password-change-form" *ngIf="showPasswordChange()">
-            <div class="form-group">
-              <label for="current-password">Current Password</label>
-              <input
-                id="current-password"
-                type="password"
-                class="form-control"
-                [value]="passwordForm().current_password"
-                (input)="updateCurrentPassword($event)"
-                placeholder="Enter current password"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="new-password">New Password</label>
-              <input
-                id="new-password"
-                type="password"
-                class="form-control"
-                [value]="passwordForm().new_password"
-                (input)="updateNewPassword($event)"
-                placeholder="Enter new password"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="confirm-password">Confirm New Password</label>
-              <input
-                id="confirm-password"
-                type="password"
-                class="form-control"
-                [value]="passwordForm().confirm_password"
-                (input)="updateConfirmPassword($event)"
-                placeholder="Confirm new password"
-              />
-            </div>
-
-            <div class="form-actions">
-              <button 
-                class="btn btn-success"
-                (click)="changePassword()"
-                [disabled]="isSaving()"
-              >
-                <i class="fas fa-save"></i> 
-                {{ isSaving() ? 'Changing...' : 'Change Password' }}
-              </button>
-              <button 
-                class="btn btn-secondary"
-                (click)="showPasswordChange.set(false)"
-                [disabled]="isSaving()"
-              >
-                <i class="fas fa-times"></i> Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- Settings Section -->
-      <section class="profile-section">
+      <section class="profile-section hide">
         <div class="section-header">
           <h2><i class="fas fa-cog"></i> Settings</h2>
         </div>
@@ -224,11 +143,11 @@
                   [title]="'Current: ' + themeService.currentTheme()"
                 >
                   @if (themeService.currentTheme() === 'light') {
-                    <i class="fas fa-sun"></i>
+                    <i class="pi pi-sun"></i>
                   } @else if (themeService.currentTheme() === 'dark') {
-                    <i class="fas fa-moon"></i>
+                    <i class="pi pi-moon"></i>
                   } @else {
-                    <i class="fas fa-adjust"></i>
+                    <i class="pi pi-cog"></i>
                   }
                 </button>
               </div>

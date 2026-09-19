@@ -1,5 +1,5 @@
 @import "primeicons/primeicons.css";
-
+@import "font-awesome/css/font-awesome.min.css";
 /* Theme Variables */
 :root {
   color-scheme: light;
@@ -8,7 +8,7 @@
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --bg-elevated: #ffffff;
-  --text-primary: #1a202c;
+  --text-primary: #000207;
   --text-secondary: #334155;
   --text-muted: #475569;
   --text-inverse: #ffffff;
@@ -407,7 +407,17 @@ select:focus {
   white-space: nowrap;
   border: 0;
 }
+.hide {
+  display: none !important;
+}
 
+.display-flex {
+  display: flex;
+}
+
+.display-block {
+  display: block;
+}
 /* Animation utilities */
 .fade-in {
   animation: fadeIn 0.3s ease-in;
