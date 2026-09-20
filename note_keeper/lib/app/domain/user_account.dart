@@ -13,7 +13,7 @@ class Account extends User {
   final DateTime login;
   final DateTime expireDate;
 
-  Account(this.token, this.login, this.expireDate,
+  const Account(this.token, this.login, this.expireDate,
       {required super.name, required super.lastname, required super.username, required super.email});
 
   factory Account.empty() =>
@@ -30,7 +30,7 @@ class Account extends User {
           email: 'admin@prova');
 
   bool isNotEmptyAccount() {
-    return this.token != '' && this.name != '' && this.lastname != '' &&
-        this.email != '' && this.username != '';
+    return token != '' && name != '' && lastname != '' &&
+        email != '' && username != '';
   }
 }

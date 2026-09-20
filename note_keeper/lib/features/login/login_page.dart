@@ -1,6 +1,7 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:note_keeper/app/domain/auth_state.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 
 class LoginPage extends ConsumerWidget {
@@ -25,13 +26,19 @@ class LoginPage extends ConsumerWidget {
 
             ElevatedButton(
               onPressed: () async {
+
+
                 await ref.read(authProvider.notifier).authenticate(
-                  context,
                   'admin',
-                  'admin',
-                  '/home',
-                  '/login-error',
+                  'admin'
                 );
+
+                final authState = ref.read(authProvider);
+
+                if(authState.value?.status == AuthStatus.authenticated) {
+                  // Navigate to the desired route
+                  context.go('/home');
+                }
               },
               child: const Text('Login'),
             ),

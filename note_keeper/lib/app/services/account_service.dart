@@ -13,7 +13,7 @@ abstract class IAccountService {
   Future<AuthState> logout();
 
 
-  Future<AuthState> checkSession();
+  Future<AuthState> checkSession(Account account);
 
   factory IAccountService.create() => AccountService();
 }
@@ -23,13 +23,16 @@ class AccountService implements IAccountService {
 
   bool  hasToken = false;
 
+  /// is true if database contains account is created and initialized
+  bool isAccountDBInitialized = false;
+
   /// Check if user is authenticated in session
   @override
-  Future<AuthState> checkSession() async{
+  Future<AuthState> checkSession(Account account) async{
     /// TODO: call authentication
 
-    return await verifyToken() ?
-                      Future.syncValue(AuthState.authenticated()) :
+    return await verifyToken() && await isDbInitialized() ?
+                      Future.syncValue(AuthState.authenticated(account)) :
                       Future.syncValue(AuthState.unauthenticated());
 
   }
@@ -52,11 +55,14 @@ class AccountService implements IAccountService {
 
     /// TODO: mocked values
       hasToken = false;
-
       return Future.syncValue(AuthState.unauthenticated());
   }
 
   Future<bool> verifyToken() {
     return Future.syncValue(hasToken);
+  }
+
+  Future<bool> isDbInitialized() async {
+    return Future.syncValue(isAccountDBInitialized);
   }
 }

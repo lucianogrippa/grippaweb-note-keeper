@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/domain/auth_state.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
-import 'package:note_keeper/features/home/home_view.dart';
+import 'package:note_keeper/features/home/home_page.dart';
 import 'package:note_keeper/features/login/login_page.dart';
 
 
@@ -15,40 +15,38 @@ final Map<String, bool> routesAuthList = {
 
 /// define route for entire application
 final routerProvider = Provider<GoRouter>((ref) {
-
   final notifier = ValueNotifier<int>(0);
 
   ref.listen(authProvider, (_, _) {
-      notifier.value++;
+    notifier.value++;
   });
+
+  ref.onDispose(() {
+    notifier.dispose();
+  });
+
 
   return GoRouter(
 
     initialLocation: '/home',
     refreshListenable: notifier,
     redirect: (context, state) async {
+      // before switch route check if the application is authenticated
+      final authState = await ref.read(authProvider.future);
+      final loggedIn = authState.status == AuthStatus.authenticated;
 
-        // before switch route check if the application is authenticated
-        final authState = await ref.watch(authProvider.future);
-        final loggedIn =  authState.status == AuthStatus.authenticated;
+      final routeToRedirect = routesAuthList.entries.firstWhere((entry) =>
+          state.matchedLocation.contains(entry.key),
+          orElse: () => MapEntry("-1", false));
 
-        final routeToRedirect = routesAuthList.entries.firstWhere((entry)=>state.matchedLocation.contains(entry.key),
-            orElse: () => MapEntry("-1", false));
-
-        final needAuth = routeToRedirect.value != '-1';
-
-
-        if (needAuth && !loggedIn) {
-          return '/login';
-        }
-
-        if(state.fullPath == '') {
-          // not find match redirect to Home
-          return '/home';
-        }
+      final needAuth = routeToRedirect.value != '-1';
 
 
-        return state.fullPath;
+      if (needAuth && !loggedIn) {
+        return '/login';
+      }
+
+      return null;
     },
     routes: [
       GoRoute(
