@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "108.0.0"
+  adaptive_number:
+    dependency: transitive
+    description:
+      name: adaptive_number
+      sha256: "3a567544e9b5c9c803006f51140ad544aedc79604fd4f3f2c1380003f97c1d77"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   analysis_server_plugin:
     dependency: transitive
     description:
@@ -193,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  dart_jsonwebtoken:
+    dependency: "direct main"
+    description:
+      name: dart_jsonwebtoken
+      sha256: b268ff9bb87a16360a397f1accb50e7c781384e1119010b34f6d7c25820c44d8
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
   dart_style:
     dependency: transitive
     description:
@@ -201,6 +217,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.13"
+  ed25519_edwards:
+    dependency: transitive
+    description:
+      name: ed25519_edwards
+      sha256: f3c3b109a0e470ee35f6346a155cab290578660852237fce10df6bbd92758534
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.2"
   fake_async:
     dependency: transitive
     description:
