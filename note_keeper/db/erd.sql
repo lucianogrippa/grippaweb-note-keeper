@@ -5,9 +5,10 @@ PRAGMA foreign_keys = ON;
 -- ===========================
 CREATE TABLE IF NOT EXISTS user_profile (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    username TEXT NOT NULL,
     name TEXT NOT NULL,
     lastname TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
+    email TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );

@@ -10,9 +10,13 @@ class SecurityService {
 
   late Argon2Parameters parameters;
 
+  late String currentSalt;
+
   /// Init Argon2 parameters with salt and default values for iterations, memory and version
   /// for version 1.0 and ARGON2_i
   SecurityService._v10(String salt) {
+
+    currentSalt = salt;
 
     var encodedSalt = salt.toBytesUTF8();
 
@@ -29,6 +33,8 @@ class SecurityService {
   /// Init Argon2 parameters with salt and default values for iterations, memory and version
   /// for version 1.3 and ARGON2_id
   SecurityService._v13(String salt) {
+
+    currentSalt = salt;
 
     parameters = Argon2Parameters(
       Argon2Parameters.ARGON2_id,

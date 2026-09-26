@@ -17,7 +17,7 @@ final Map<String, bool> routesAuthList = {
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ValueNotifier<int>(0);
 
-  ref.listen(authProvider, (_, _) {
+  ref.listen(authStateProvider, (_, _) {
     notifier.value++;
   });
 
@@ -32,8 +32,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) async {
       // before switch route check if the application is authenticated
-      final authState = await ref.read(authProvider.future);
-      final loggedIn = authState.status == AuthStatus.authenticated;
+      final authState = ref.watch(authStateProvider).value;
+      final loggedIn = authState?.status == AuthStatus.authenticated;
 
       final routeToRedirect = routesAuthList.entries.firstWhere((entry) =>
           state.matchedLocation.contains(entry.key),
@@ -42,25 +42,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       final needAuth = routeToRedirect.value != '-1';
 
 
+
+
       if (needAuth && !loggedIn) {
         return '/login';
       }
+
 
       return null;
     },
     routes: [
       GoRoute(
         path: '/home',
-        builder: (_, _) => const HomePage(),
+        builder: (_, _) =>  HomePage(),
       ),
       GoRoute(
         path: '/login',
-        builder: (_, _) => const LoginPage(),
-      ),
-      GoRoute(
-        path: '/error-page',
-        builder: (_, _) => const LoginPage(),
-      ),
+        builder: (_, _) =>  LoginPage(),
+      )
     ],
   );
 });
