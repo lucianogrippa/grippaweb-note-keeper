@@ -17,8 +17,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   @override
   FutureOr<AuthState> build() async {
 
-    _accountService = ref.watch(accountServiceProvider);
-    _storageService = ref.watch(storageServiceProvider);
+    _accountService = await ref.watch(accountServiceProvider.future);
+    _storageService = await ref.watch(storageServiceProvider.future);
 
     StorageState storage = await _storageService.build();
 
@@ -33,6 +33,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<bool> checkSession(Account account) async {
     update((actualState) async=> actualState = await _accountService.checkSession(account));
     return state.value?.status == AuthStatus.authenticated;
+  }
+
+  Future<bool> isAccountRegistered() async {
+    return await _accountService.isAccountExists();
   }
 
   Future<void> authenticate(String username, String password) async {

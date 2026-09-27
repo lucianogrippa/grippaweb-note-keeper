@@ -12,16 +12,18 @@ final Provider<IDatabaseService> databaseProvider = Provider<IDatabaseService>((
 });
 
 /// provide storage service
-final Provider<IStorageService> storageServiceProvider = Provider<IStorageService>((ref) {
-  return StorageService();
+final FutureProvider<IStorageService> storageServiceProvider = FutureProvider<IStorageService>((ref) async {
+  var storageService = StorageService();
+  await storageService.build();
+  return storageService;
 });
 
 
 /// provide account service
-final Provider<IAccountService> accountServiceProvider = Provider<IAccountService>((ref) {
+final FutureProvider<IAccountService> accountServiceProvider = FutureProvider<IAccountService>((ref) async {
 
-    IStorageService storageService = ref.watch(storageServiceProvider);
-    IAccountRepository accountRepository = ref.watch(accountRepositoryProvider);
+    IStorageService storageService = await ref.read(storageServiceProvider.future);
+    IAccountRepository accountRepository = await ref.watch(accountRepositoryProvider.future);
 
     var accountService = IAccountService.create(storageService: storageService,
                                                 accountRepository: accountRepository);

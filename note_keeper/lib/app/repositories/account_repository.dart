@@ -6,11 +6,22 @@ import 'package:sqflite_sqlcipher/sqflite.dart';
 
 
 /// repository provider
-final Provider<IAccountRepository> accountRepositoryProvider = Provider((ref) {
-  final dataSource = ref.watch(databaseProvider).dataSource();
+final FutureProvider<IAccountRepository> accountRepositoryProvider = FutureProvider((ref) async {
+  final databaseService = ref.watch(databaseProvider);
+  final  storageService = await ref.watch(storageServiceProvider.future);
 
+  final password = await storageService.loadMasterPassword();
+
+  if(password.isEmpty){
+    throw ArgumentError("Password cannot be empty");
+  }
+
+  await databaseService.open(password: password);
+
+  final db = databaseService.dataSource();
   /// inject datasource to account repository
-  return IAccountRepository.create(dataSource);
+  ///
+  return IAccountRepository.create(db);
 });
 
 

@@ -1,13 +1,13 @@
 import 'dart:io';
+
 import 'package:note_keeper/app/services/security_service.dart';
 import 'package:path/path.dart' as path;
-
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 abstract class IDatabaseService{
 
   Database dataSource();
-  Future<void> open({String? dbpath, required String password});
+  Future<bool> open({String? dbpath, required String password});
 }
 
 
@@ -21,7 +21,11 @@ class DatabaseService extends IDatabaseService {
   DatabaseService();
 
 @override
-Future<void> open({String? dbpath, required String   password}) async {
+Future<bool> open({String? dbpath, required String   password}) async {
+
+    if(password.isEmpty) {
+      return false;
+    }
 
     var userDataPath = dbpath ?? await getDatabasesPath();
 
@@ -103,6 +107,8 @@ Future<void> open({String? dbpath, required String   password}) async {
     );
 
     _dbPath = userDataPath;
+
+    return db.isOpen;
   }
 
   factory DatabaseService.createWithPassword(String password)  => DatabaseService()..open(password: password);

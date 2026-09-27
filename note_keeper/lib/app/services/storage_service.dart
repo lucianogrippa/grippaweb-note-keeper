@@ -12,11 +12,14 @@ abstract class IStorageService {
 
   FutureOr<StorageState> build();
 
+
   Future<String> loadSaltKey();
 
   Future<String> loadStoredAuthToken();
 
   Future<String> loadMasterPassword();
+
+  Future<bool> isMasterPasswordExists();
 
   Future<void> storeMasterPassword(String password);
 
@@ -41,6 +44,12 @@ class StorageService  implements IStorageService {
   @override
   Future<String> loadSaltKey() async {
     return await _storage.read(key: _saltKey) ?? '';
+  }
+
+  @override
+  Future<bool> isMasterPasswordExists() async {
+    final masterPassword = await _storage.read(key: _masterPwdKey);
+    return masterPassword != null && masterPassword.isNotEmpty;
   }
 
   static const String _authTokenKey ='0aab846a443ddcfe7655696b97d3d5bfc0fb3e98';

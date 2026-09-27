@@ -22,7 +22,7 @@ abstract class IAccountService {
 
   /// Check if account is created in database, At least one account should be created in database,
   /// otherwise user should create account first
-  Future<bool> accountIsCreatedInDatabase();
+  Future<bool> isAccountExists();
 
   factory IAccountService.create({
     required IStorageService storageService,
@@ -44,7 +44,7 @@ class AccountService implements IAccountService {
   /// Check if user is authenticated in session
   @override
   Future<AuthState> checkSession(Account account) async{
-    return await verifyToken() && await accountIsCreatedInDatabase() ?
+    return await verifyToken() && await isAccountExists() ?
                       Future.syncValue(AuthState.authenticated(account)) :
                       Future.syncValue(AuthState.unauthenticated());
 
@@ -132,7 +132,7 @@ class AccountService implements IAccountService {
   }
 
   @override
-  Future<bool> accountIsCreatedInDatabase() async {
+  Future<bool> isAccountExists() async {
 
     var totalAccounts = await _accountRepository.totalAccounts();
 
