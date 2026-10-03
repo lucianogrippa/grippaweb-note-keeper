@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:note_keeper/app/domain/registration_data.dart';
 import 'package:note_keeper/app/domain/user_account.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
@@ -13,7 +14,7 @@ final FutureProvider<IAccountRepository> accountRepositoryProvider = FutureProvi
   final password = await storageService.loadMasterPassword();
 
   if(password.isEmpty){
-    throw ArgumentError("Password cannot be empty");
+    throw ArgumentError("Master Password for database cannot be empty");
   }
 
   await databaseService.open(password: password);
@@ -30,12 +31,14 @@ abstract class IAccountRepository {
 
   Future<int> totalAccounts();
 
-
   factory IAccountRepository.create(Database db) => AccountRepository(db:db);
+
 
   Future<Account> findByUsername(String username);
 
   Future<String> loadHashedPassword(String username);
+
+  Future<void> createAccount(RegistrationData data);
 }
 
 /// Repository implementation for account-related database operations
@@ -89,5 +92,37 @@ class AccountRepository implements IAccountRepository {
 
     return '';
   }
+
+  @override
+  Future<void> createAccount(RegistrationData data) async {
+
+    if(data.masterPasswordConfirmed && data.passwordConfirmed){
+
+      // check if account exists
+      var accountExist = await totalAccounts() > 0;
+
+      if(accountExist){
+        throw ArgumentError("Account already exists");
+      }
+
+      await _db.insert(
+        'user_profile',
+        {
+          'username': data.username,
+          'name': data.name,
+          'lastname': data.lastname,
+          'email': data.email,
+          'password_hash': data.password,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+      );
+
+      return Future.value();
+    }
+
+    throw ArgumentError("Master Password and Password must be confirmed");
+  }
+
 }
 

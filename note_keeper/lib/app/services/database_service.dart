@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'package:note_keeper/app/services/security_service.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as path show join;
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 abstract class IDatabaseService{
 
   Database dataSource();
-  Future<bool> open({String? dbpath, required String password});
-}
 
+  Future<bool> isDbExistsInSystem();
+  Future<bool> open({String? dbpath, required String password});
+
+  Future<void> deleteDatabase();
+}
 
 class DatabaseService extends IDatabaseService {
 
@@ -17,6 +20,28 @@ class DatabaseService extends IDatabaseService {
   late String _dbPath;
   final int _version = 1;
   late Database db;
+
+  @override
+  Future<void> deleteDatabase() async {
+    if (await isDbExistsInSystem()) {
+      try {
+        await db.close();
+      } on Exception catch (e) {
+        print("Error closing database: $e");
+      }
+      await File(_dbPath).delete();
+    }
+  }
+
+  @override
+  Future<bool> isDbExistsInSystem() async {
+
+    if(_dbPath.isEmpty) {
+      return false;
+    }
+
+    return await File(_dbPath).exists();
+  }
 
   DatabaseService();
 

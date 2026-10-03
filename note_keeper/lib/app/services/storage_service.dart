@@ -32,6 +32,8 @@ abstract class IStorageService {
 
   String deriveSignKeyFromHashedPassword(String hashedPassword);
 
+  Future<void> removeMasterPassword();
+
 }
 
 class StorageService  implements IStorageService {
@@ -168,5 +170,10 @@ class StorageService  implements IStorageService {
     var derivedKey = _securityService.deriveKey(hashedPassword);
 
     return derivedKey;
+  }
+
+  @override
+  Future<void> removeMasterPassword() {
+    return _storage.delete(key: _masterPwdKey);
   }
 }

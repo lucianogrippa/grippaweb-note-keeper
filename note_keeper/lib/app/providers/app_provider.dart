@@ -25,7 +25,7 @@ final FutureProvider<IAccountService> accountServiceProvider = FutureProvider<IA
     IStorageService storageService = await ref.read(storageServiceProvider.future);
     IAccountRepository accountRepository = await ref.watch(accountRepositoryProvider.future);
 
-    var accountService = IAccountService.create(storageService: storageService,
+    var accountService = IAccountService.init(storageService: storageService,
                                                 accountRepository: accountRepository);
 
     return accountService;

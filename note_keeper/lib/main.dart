@@ -17,7 +17,7 @@ class MainApp extends ConsumerWidget {
       routerConfig: router,
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.blueAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       )
     );
   }

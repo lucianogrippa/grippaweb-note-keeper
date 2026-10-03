@@ -24,7 +24,7 @@ abstract class IAccountService {
   /// otherwise user should create account first
   Future<bool> isAccountExists();
 
-  factory IAccountService.create({
+  factory IAccountService.init({
     required IStorageService storageService,
     required IAccountRepository accountRepository}) =>
       AccountService(
@@ -155,4 +155,5 @@ class AccountService implements IAccountService {
 
     return DateTime.now().isAfter(expireDate);
   }
+
 }
