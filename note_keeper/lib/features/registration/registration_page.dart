@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
@@ -19,11 +20,27 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
 
   RegistrationData registrationData = RegistrationData.empty();
 
-  bool btnRegisterEnabled = false;
-  bool btnCancelEnabled = true;
+  bool _btnRegisterEnabled = false;
+  bool _btnCancelEnabled = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _obscureMasterPassword = true;
+  bool _obscureConfirmMasterPassword = true;
 
-  late final ScaffoldMessengerState _scaffoldMessenger;
-  late final NavigatorState _navigatorState;
+  @override
+  void initState() {
+    super.initState();
+
+    _btnRegisterEnabled = false;
+    _btnCancelEnabled = true;
+    _obscurePassword = true;
+    _obscureConfirmPassword = true;
+    _obscureMasterPassword = true;
+    _obscureConfirmMasterPassword = true;
+  }
+
+  ScaffoldMessengerState? _scaffoldMessenger;
+  NavigatorState? _navigatorState;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +57,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
             padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
 
               child: ConstrainedBox(
                 // Constrain the width, but let the height adapt dynamically to the children
@@ -83,13 +101,9 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter your first name',
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your first name';
-                                }
-
-                                setState(() => registrationData.name = value);
-                                return null;
+                              validator: _validateName,
+                              onSaved: (value) {
+                                registrationData.name = value!.trim();
                               },
                             ),
                             const SizedBox(height: 16),
@@ -97,15 +111,9 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter your last name',
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your last name';
-                                }
-
-                                setState(
-                                  () => registrationData.lastname = value,
-                                );
-                                return null;
+                              validator: _validateLastName,
+                              onSaved: (value) {
+                                registrationData.lastname = value!.trim();
                               },
                             ),
                             const SizedBox(height: 16),
@@ -113,33 +121,58 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter your email',
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-
-                                setState(() => registrationData.email = value);
-                                return null;
+                              keyboardType: TextInputType.emailAddress,
+                              validator: _validateEmail,
+                              onSaved: (value) {
+                                registrationData.email = value!.trim();
                               },
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
                                 hintText: 'Enter your password',
                               ),
-                              obscureText: true,
+                              obscureText: _obscurePassword,
                               validator: _validatePassword,
-                              onChanged: (value) => setState(
-                                () => registrationData.password = value,
-                              ),
+                              onSaved: (value) {
+                                registrationData.password = value!.trim();
+                              },
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword;
+                                    });
+                                  },
+                                ),
                                 hintText: 'Confirm your password',
                               ),
-                              obscureText: true,
+                              obscureText: _obscureConfirmPassword,
                               validator: _confirmPassword,
+                              onSaved: (value) {
+                                registrationData.passwordConfirmed = value!.trim() == registrationData.password;
+                              },
                             ),
                           ],
                         ),
@@ -166,19 +199,51 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                             ),
 
                             TextFormField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureMasterPassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureMasterPassword =
+                                          !_obscureMasterPassword;
+                                    });
+                                  },
+                                ),
                                 hintText: 'Enter your master password',
                               ),
-                              obscureText: true,
+                              obscureText: _obscureMasterPassword,
                               validator: _validateMasterPassword,
+                              onSaved: (value) {
+                                registrationData.masterPassword = value!.trim();
+                              },
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmMasterPassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmMasterPassword =
+                                          !_obscureConfirmMasterPassword;
+                                    });
+                                  },
+                                ),
                                 hintText: 'Confirm your master password',
                               ),
-                              obscureText: true,
+                              obscureText: _obscureConfirmMasterPassword,
                               validator: _confirmMasterPassword,
+                              onSaved: (value) {
+                                registrationData.masterPasswordConfirmed = value!.trim() == registrationData.masterPassword;
+                              },
                             ),
                           ],
                         ),
@@ -193,16 +258,15 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             ElevatedButton(
-                              onPressed: () async {
-                                var result = await _registerAccount();
-                                if (result) {
-                                  _navigatorState.pushReplacementNamed('/login');
-                                }
-                              },
+                              onPressed: _btnRegisterEnabled
+                                  ? _submitRegistration
+                                  : null,
                               child: const Text('Register'),
                             ),
                             ElevatedButton(
-                              onPressed: () => _formKey.currentState!.reset(),
+                              onPressed: _btnCancelEnabled
+                                  ? () => _formKey.currentState!.reset()
+                                  : null,
                               child: const Text('Clear'),
                             ),
                           ],
@@ -217,6 +281,47 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         ),
       ),
     );
+  }
+
+  void _submitRegistration() async {
+    var result = await _registerAccount();
+    if (result) {
+      _navigatorState?.pushReplacementNamed('/login');
+    }
+  }
+
+  String? _validateLastName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your last name';
+    }
+    return null;
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your first name';
+    }
+
+    //setState(() => registrationData.name = value.trim());
+    //checkForEnableRegisterButton();
+    return null;
+  }
+
+
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email';
+    }
+
+    // validate email
+    if (!EmailValidator.validate(value)) {
+      return 'Please enter a valid email address';
+    }
+
+    //setState(() => registrationData.email = value.trim());
+    //checkForEnableRegisterButton();
+    return null;
   }
 
   ///
@@ -235,10 +340,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
       return "The password does not meet the criteria. 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character.";
     }
 
-    setState(() {
-      registrationData.password = value;
-    });
-
+    //checkForEnableRegisterButton();
     return null;
   }
 
@@ -257,10 +359,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
       return 'Passwords do not match';
     }
 
-    setState(() {
-      registrationData.passwordConfirmed = true;
-      registrationData.password = value;
-    });
+    //checkForEnableRegisterButton();
     return null;
   }
 
@@ -285,11 +384,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
 
       return 'Passwords do not match';
     }
-
-    setState(() {
-      registrationData.masterPassword = value;
-      registrationData.masterPasswordConfirmed = true;
-    });
+    //checkForEnableRegisterButton();
     return null;
   }
 
@@ -309,9 +404,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
       return "The password does not meet the criteria. 10 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character.";
     }
 
-    setState(() {
-      registrationData.masterPassword = value;
-    });
+    //checkForEnableRegisterButton();
     return null;
   }
 
@@ -326,25 +419,27 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         return false;
       }
       // Process data.
-
+      _formKey.currentState!.save();
       // disable Register button and cancel button
 
       setState(() {
         // Disable Register and Clear buttons
-        btnRegisterEnabled = false;
-        btnCancelEnabled = false;
+        _btnRegisterEnabled = false;
+        _btnCancelEnabled = false;
       });
 
-      _scaffoldMessenger.showSnackBar(
+      _scaffoldMessenger?.showSnackBar(
         const SnackBar(content: Text('Processing Data')),
       );
 
-      if(registrationData.masterPasswordConfirmed && registrationData.passwordConfirmed) {
-
+      if (registrationData.masterPasswordConfirmed &&
+          registrationData.passwordConfirmed) {
         // store master password in secure storage
         var storageService = await ref.read(storageServiceProvider.future);
 
-        await storageService.storeMasterPassword(registrationData.masterPassword);
+        await storageService.storeMasterPassword(
+          registrationData.masterPassword,
+        );
       }
 
       // create account
@@ -355,57 +450,57 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
       );
 
       if (isAccountCreated) {
-        _scaffoldMessenger.showSnackBar(
+        _scaffoldMessenger?.showSnackBar(
           const SnackBar(content: Text('Account successfully created')),
         );
         _formKey.currentState!.reset();
         return true;
       }
 
-      _scaffoldMessenger.showSnackBar(
+      _scaffoldMessenger?.showSnackBar(
         const SnackBar(content: Text('Failed to create account')),
       );
     } catch (e) {
       _cleanUpFailedRegistration();
-      _scaffoldMessenger.showSnackBar(
+      _scaffoldMessenger?.showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
     } finally {
       setState(() {
         // Re-enable Register and Clear buttons
-        btnRegisterEnabled = true;
-        btnCancelEnabled = true;
+        _btnRegisterEnabled = true;
+        _btnCancelEnabled = true;
       });
     }
 
     return false;
   }
 
-
   Future<void> _cleanUpFailedRegistration() async {
     // Remove the master password from secure storage if registration fails
     try {
       var storageService = await ref.read(storageServiceProvider.future);
-      
+
       var masterPassword = await storageService.loadMasterPassword();
-      
-      
-      if(masterPassword.isNotEmpty) {
-      
+
+      if (masterPassword.isNotEmpty) {
         var accountService = await ref.read(registrationServiceProvider.future);
-      
+
         var dbExists = await accountService.dbCreated();
-      
-        if(dbExists) {
+
+        if (dbExists) {
           // delete db
           await accountService.deleteDatabase();
         }
-      
+
         await storageService.removeMasterPassword();
       }
     } on Exception catch (e, stackTrace) {
-      debugPrintStack(stackTrace: stackTrace,label: "cleanUpFailedRegistration",maxFrames: 100);
+      debugPrintStack(
+        stackTrace: stackTrace,
+        label: "cleanUpFailedRegistration",
+        maxFrames: 100,
+      );
     }
-
   }
 }

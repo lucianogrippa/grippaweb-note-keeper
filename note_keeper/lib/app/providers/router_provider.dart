@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/domain/auth_state.dart';
+import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/services/storage_service.dart';
+import 'package:note_keeper/features/common/LoadingOverlay.dart';
 import 'package:note_keeper/features/home/home_page.dart';
 import 'package:note_keeper/features/login/login_page.dart';
 import 'package:note_keeper/features/registration/registration_page.dart';
@@ -69,17 +71,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/home',
-        builder: (_, _) =>  HomePage(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (_, _) =>  LoginPage(),
-      ),
-      GoRoute(
-          path: '/registration',
-          builder: (_, _) => RegistrationPage()),
+      ShellRoute(
+        builder: (context, state, child) {
+          final isLoading = ref.watch(loadingProvider);
+          return LoadingOverlay(
+            isLoading: isLoading,
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (_, _) =>  HomePage(),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (_, _) =>  LoginPage(),
+          ),
+          GoRoute(
+              path: '/registration',
+              builder: (_, _) => RegistrationPage())
+        ]),
     ],
   );
 });
