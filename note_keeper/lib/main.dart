@@ -1,6 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:hive_ce_flutter/adapters.dart';
 import 'package:note_keeper/app/providers/router_provider.dart';
+import 'package:note_keeper/app/services/database_service.dart';
+import 'package:note_keeper/app/services/security_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 /// Main Application class using router provider
 class MainApp extends ConsumerWidget {
@@ -23,10 +31,16 @@ class MainApp extends ConsumerWidget {
   }
 }
 
-void main() {
+void main() async {
+  await _initDb();
   runApp(
       ProviderScope(
           child: const MainApp()
       )
   );
+}
+
+Future<void> _initDb() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseService.create().init();
 }

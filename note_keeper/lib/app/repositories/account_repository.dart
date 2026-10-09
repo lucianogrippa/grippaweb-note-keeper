@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:note_keeper/app/domain/registration_data.dart';
 import 'package:note_keeper/app/domain/user_account.dart';
+import 'package:note_keeper/app/domain/user_profile.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
 
 
 
@@ -17,11 +18,10 @@ final FutureProvider<IAccountRepository> accountRepositoryProvider = FutureProvi
     throw ArgumentError("Master Password for database cannot be empty");
   }
 
-  await databaseService.open(password: password);
+  await databaseService.open<UserProfile, UserProfileAdapter>(table: "user_profile", password: password);
 
   final db = databaseService.dataSource();
   /// inject datasource to account repository
-  ///
   return IAccountRepository.create(db);
 });
 
@@ -31,7 +31,7 @@ abstract class IAccountRepository {
 
   Future<int> totalAccounts();
 
-  factory IAccountRepository.create(Database db) => AccountRepository(db:db);
+  factory IAccountRepository.create(Box? db) => AccountRepository(db:db);
 
 
   Future<Account> findByUsername(String username);
@@ -44,24 +44,19 @@ abstract class IAccountRepository {
 /// Repository implementation for account-related database operations
 class AccountRepository implements IAccountRepository {
 
-  final Database _db;
+  final Box? _db;
 
   AccountRepository({required this._db});
 
   @override
   Future<int> totalAccounts() async {
-    final result = await _db.rawQuery(
-        'SELECT COUNT(*) as count FROM user_profile');
+    final result = await _db.get("user_profile", defaultValue: null);
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
   @override
   Future<Account> findByUsername(String username) async {
-    final result = await _db.query(
-      'user_profile',
-      where: 'username = ?',
-      whereArgs: [username],
-    );
+    final result = await _db?.values.firstOrNull(where: (row) => row['username'] == username);
 
     if (result.isNotEmpty) {
       final row = result.first;

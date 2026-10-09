@@ -1,4 +1,4 @@
-package com.example.note_keeper
+package com.grippaweb.note_keeper
 
 import io.flutter.embedding.android.FlutterActivity
 

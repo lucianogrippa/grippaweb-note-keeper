@@ -48,8 +48,9 @@ class RegistrationService implements IRegistrationService {
 }
 
 var registrationServiceProvider = FutureProvider<IRegistrationService>((ref) async {
-  final databaseService = await ref.watch(databaseProvider);
-  final accountRepository = await ref.watch(accountRepositoryProvider.future);
+  final databaseService = ref.read(databaseProvider);
+  final accountRepository = await ref.read(accountRepositoryProvider.future);
 
-    return RegistrationService(accountRepository: accountRepository, databaseService: databaseService);
+  return RegistrationService(
+      accountRepository: accountRepository, databaseService: databaseService);
 });

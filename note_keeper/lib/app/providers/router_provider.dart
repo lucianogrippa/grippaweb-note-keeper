@@ -44,7 +44,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // before switch route check if the application is authenticated
-      final authState = await ref.read(authStateProvider.future);
+      final authState = await ref.watch(authStateProvider.future);
       final authService = await ref.read(accountServiceProvider.future);
 
 
@@ -60,7 +60,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation.contains(entry.key),
           orElse: () => MapEntry("-1", false));
 
-      final needAuth = routeToRedirect.value != '-1';
+      final needAuth = routeToRedirect.value != "-1";
 
 
       if (needAuth && !loggedIn) {

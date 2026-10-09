@@ -9,7 +9,7 @@ class LoginPage extends ConsumerStatefulWidget {
 
 
 
-  LoginPage({super.key});
+  const LoginPage({super.key});
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();

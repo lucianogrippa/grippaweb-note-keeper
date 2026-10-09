@@ -17,21 +17,28 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>(
     debugLabel: 'registrationForm',
   );
+  final ValueNotifier<bool> _isFormValid = ValueNotifier<bool>(false);
 
   RegistrationData registrationData = RegistrationData.empty();
 
-  bool _btnRegisterEnabled = false;
   bool _btnCancelEnabled = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _obscureMasterPassword = true;
   bool _obscureConfirmMasterPassword = true;
 
+  final _nameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _masterPasswordController = TextEditingController();
+  final _confirmMasterPasswordController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
 
-    _btnRegisterEnabled = false;
     _btnCancelEnabled = true;
     _obscurePassword = true;
     _obscureConfirmPassword = true;
@@ -41,6 +48,18 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
 
   ScaffoldMessengerState? _scaffoldMessenger;
   NavigatorState? _navigatorState;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _masterPasswordController.dispose();
+    _confirmMasterPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,37 +116,44 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               ),
                             ),
 
+                            // name controller
                             TextFormField(
                               decoration: const InputDecoration(
                                 hintText: 'Enter your first name',
                               ),
+                              controller: _nameController,
                               validator: _validateName,
-                              onSaved: (value) {
-                                registrationData.name = value!.trim();
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
+
                             const SizedBox(height: 16),
+
+                            // last name controller
                             TextFormField(
                               decoration: const InputDecoration(
                                 hintText: 'Enter your last name',
                               ),
+                              controller: _lastNameController,
                               validator: _validateLastName,
-                              onSaved: (value) {
-                                registrationData.lastname = value!.trim();
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
+
                             const SizedBox(height: 16),
+
+                            // email
                             TextFormField(
                               decoration: const InputDecoration(
                                 hintText: 'Enter your email',
                               ),
+                              controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: _validateEmail,
-                              onSaved: (value) {
-                                registrationData.email = value!.trim();
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
+
                             const SizedBox(height: 16),
+
+                            // password
                             TextFormField(
                               decoration: InputDecoration(
                                 suffixIcon: IconButton(
@@ -144,13 +170,15 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                                 ),
                                 hintText: 'Enter your password',
                               ),
+                              controller: _passwordController,
                               obscureText: _obscurePassword,
                               validator: _validatePassword,
-                              onSaved: (value) {
-                                registrationData.password = value!.trim();
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
+
                             const SizedBox(height: 16),
+
+                            // confirm password
                             TextFormField(
                               decoration: InputDecoration(
                                 suffixIcon: IconButton(
@@ -168,11 +196,10 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                                 ),
                                 hintText: 'Confirm your password',
                               ),
+                              controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
                               validator: _confirmPassword,
-                              onSaved: (value) {
-                                registrationData.passwordConfirmed = value!.trim() == registrationData.password;
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
                           ],
                         ),
@@ -191,13 +218,14 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               child: Text(
                                 "Master Password",
                                 textAlign: TextAlign.center,
+
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-
+                            // master password
                             TextFormField(
                               decoration: InputDecoration(
                                 suffixIcon: IconButton(
@@ -215,13 +243,14 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                                 ),
                                 hintText: 'Enter your master password',
                               ),
+                              controller: _masterPasswordController,
                               obscureText: _obscureMasterPassword,
                               validator: _validateMasterPassword,
-                              onSaved: (value) {
-                                registrationData.masterPassword = value!.trim();
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
+
                             const SizedBox(height: 16),
+                            // confirm master password
                             TextFormField(
                               decoration: InputDecoration(
                                 suffixIcon: IconButton(
@@ -239,11 +268,10 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                                 ),
                                 hintText: 'Confirm your master password',
                               ),
+                              controller: _confirmMasterPasswordController,
                               obscureText: _obscureConfirmMasterPassword,
                               validator: _confirmMasterPassword,
-                              onSaved: (value) {
-                                registrationData.masterPasswordConfirmed = value!.trim() == registrationData.masterPassword;
-                              },
+                              onChanged:(_)=> _validateForm(),
                             ),
                           ],
                         ),
@@ -257,11 +285,16 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            ElevatedButton(
-                              onPressed: _btnRegisterEnabled
-                                  ? _submitRegistration
-                                  : null,
-                              child: const Text('Register'),
+
+                            // register button
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _isFormValid,
+                              builder: (context, value, child) {
+                                return ElevatedButton(
+                                  onPressed: value  ?_submitRegistration : null,
+                                  child: const Text('Register'),
+                                );
+                              }
                             ),
                             ElevatedButton(
                               onPressed: _btnCancelEnabled
@@ -281,6 +314,12 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         ),
       ),
     );
+  }
+
+  void _validateForm() {
+    // currentState?.validate() restituisce true se tutti i validatori passano
+    // Usiamo l'operatore di assegnazione per aggiornare il ValueNotifier
+    _isFormValid.value = _formKey.currentState?.validate() ?? false;
   }
 
   void _submitRegistration() async {
@@ -333,7 +372,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     }
 
     var isPasswordMeetCriteria = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_])[A-Za-z\d@$!%*?&_]{8,}$',
     ).hasMatch(value);
 
     if (!isPasswordMeetCriteria) {
@@ -349,7 +388,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   ///
   ///
   String? _confirmPassword(String? value) {
-    var chosePassword = registrationData.password;
+    var chosePassword = _passwordController.text.trim();
 
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
@@ -368,20 +407,13 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   ///
   ///
   String? _confirmMasterPassword(String? value) {
-    var currentMasterPassword = registrationData.masterPassword;
+    var currentMasterPassword = _masterPasswordController.text.trim();
 
     if (value == null || value.isEmpty) {
-      setState(() {
-        registrationData.masterPasswordConfirmed = false;
-      });
 
       return 'Please confirm your master password';
     }
     if (value != currentMasterPassword) {
-      setState(() {
-        registrationData.masterPasswordConfirmed = false;
-      });
-
       return 'Passwords do not match';
     }
     //checkForEnableRegisterButton();
@@ -397,7 +429,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     }
 
     var isPasswordMeetCriteria = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{10,}$',
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_])[A-Za-z\d@$!%*?&_]{10,}$',
     ).hasMatch(value);
 
     if (!isPasswordMeetCriteria) {
@@ -418,13 +450,9 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         );
         return false;
       }
-      // Process data.
-      _formKey.currentState!.save();
-      // disable Register button and cancel button
 
       setState(() {
         // Disable Register and Clear buttons
-        _btnRegisterEnabled = false;
         _btnCancelEnabled = false;
       });
 
@@ -432,16 +460,35 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         const SnackBar(content: Text('Processing Data')),
       );
 
+      registrationData.name = _nameController.text.trim();
+      registrationData.lastname = _lastNameController.text.trim();
+      registrationData.email = _emailController.text.trim();
+      registrationData.password = _passwordController.text.trim();
+      registrationData.passwordConfirmed = _confirmPasswordController.text.trim() == registrationData.password;
+      registrationData.masterPassword = _masterPasswordController.text.trim();
+      registrationData.masterPasswordConfirmed = _confirmMasterPasswordController.text.trim() == registrationData.masterPassword;
+
+      var storageService = await ref.read(storageServiceProvider.future);
+
       if (registrationData.masterPasswordConfirmed &&
           registrationData.passwordConfirmed) {
         // store master password in secure storage
-        var storageService = await ref.read(storageServiceProvider.future);
+
 
         await storageService.storeMasterPassword(
           registrationData.masterPassword,
         );
       }
 
+      // check if master password is ready stored in secure storage
+      var isMasterPasswordExists = await storageService.isMasterPasswordExists();
+
+      if(!isMasterPasswordExists) {
+        _scaffoldMessenger?.showSnackBar(
+          const SnackBar(content: Text('Failed to store master password')),
+        );
+        return false;
+      }
       // create account
       var accountService = await ref.read(registrationServiceProvider.future);
 
@@ -468,7 +515,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     } finally {
       setState(() {
         // Re-enable Register and Clear buttons
-        _btnRegisterEnabled = true;
         _btnCancelEnabled = true;
       });
     }
