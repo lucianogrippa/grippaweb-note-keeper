@@ -20,6 +20,8 @@ abstract class IAccountService {
 
   Future<AuthState> checkSession(Account account);
 
+  Future<AuthState> checkSessionFromStoredToken();
+
   /// Check if account is created in database, At least one account should be created in database,
   /// otherwise user should create account first
   Future<bool> isAccountExists();
@@ -56,15 +58,11 @@ class AccountService implements IAccountService {
 
     Account account = await _accountRepository.findByUsername(username);
 
-    if (account.username.isNotEmpty) {
+    if (account.email.isNotEmpty) {
 
-      String hashedPassword = await _accountRepository.loadHashedPassword(
-          account.username);
+      String incomingDerivedKey = await _accountRepository.loadDerivedPassword(account.email);
 
       String derivedKey = _storageService.deriveSignKeyFromPassword(password);
-
-      String incomingDerivedKey = _storageService
-          .deriveSignKeyFromHashedPassword(hashedPassword);
 
       if (derivedKey != incomingDerivedKey) {
         return Future.syncValue(Account.empty());
@@ -112,7 +110,7 @@ class AccountService implements IAccountService {
 
         Account account = await _accountRepository.findByUsername(username);
 
-        if(account.username.isNotEmpty && exp != null) {
+        if(account.email.isNotEmpty && exp != null) {
           var expireDate = DateTime.fromMillisecondsSinceEpoch(exp);
 
           if(DateTime.now().isAfter(expireDate)) {
@@ -156,4 +154,20 @@ class AccountService implements IAccountService {
     return DateTime.now().isAfter(expireDate);
   }
 
+  @override
+  Future<AuthState> checkSessionFromStoredToken() async {
+
+    // load token
+    var storedToken = await _storageService.loadStoredAuthToken();
+
+    if(storedToken.isNotEmpty) {
+      var isTokenValid = await verifyToken();
+      if(isTokenValid) {
+        var account = await fromToken(storedToken);
+        return AuthState.authenticated(account);
+      }
+    }
+
+    return AuthState.unauthenticated();
+  }
 }

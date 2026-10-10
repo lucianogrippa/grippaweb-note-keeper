@@ -1,19 +1,20 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/services/registration_service.dart';
+import 'package:note_keeper/app/services/storage_service.dart';
 
 import '../../app/domain/registration_data.dart';
 
-class RegistrationPage extends ConsumerStatefulWidget {
+class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
 
   @override
-  ConsumerState<RegistrationPage> createState() => _RegistrationPageState();
+  RegistrationPageState createState() => RegistrationPageState();
 }
 
-class _RegistrationPageState extends ConsumerState<RegistrationPage> {
+class RegistrationPageState extends State<RegistrationPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>(
     debugLabel: 'registrationForm',
   );
@@ -24,16 +25,12 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   bool _btnCancelEnabled = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _obscureMasterPassword = true;
-  bool _obscureConfirmMasterPassword = true;
 
   final _nameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _masterPasswordController = TextEditingController();
-  final _confirmMasterPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -42,8 +39,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     _btnCancelEnabled = true;
     _obscurePassword = true;
     _obscureConfirmPassword = true;
-    _obscureMasterPassword = true;
-    _obscureConfirmMasterPassword = true;
   }
 
   ScaffoldMessengerState? _scaffoldMessenger;
@@ -56,8 +51,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _masterPasswordController.dispose();
-    _confirmMasterPasswordController.dispose();
     super.dispose();
   }
 
@@ -206,78 +199,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                       ),
                     ),
 
-                    // Second Card: Master Password Info
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            // title master password
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                "Master Password",
-                                textAlign: TextAlign.center,
-
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            // master password
-                            TextFormField(
-                              decoration: InputDecoration(
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureMasterPassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureMasterPassword =
-                                          !_obscureMasterPassword;
-                                    });
-                                  },
-                                ),
-                                hintText: 'Enter your master password',
-                              ),
-                              controller: _masterPasswordController,
-                              obscureText: _obscureMasterPassword,
-                              validator: _validateMasterPassword,
-                              onChanged:(_)=> _validateForm(),
-                            ),
-
-                            const SizedBox(height: 16),
-                            // confirm master password
-                            TextFormField(
-                              decoration: InputDecoration(
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureConfirmMasterPassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmMasterPassword =
-                                          !_obscureConfirmMasterPassword;
-                                    });
-                                  },
-                                ),
-                                hintText: 'Confirm your master password',
-                              ),
-                              controller: _confirmMasterPasswordController,
-                              obscureText: _obscureConfirmMasterPassword,
-                              validator: _confirmMasterPassword,
-                              onChanged:(_)=> _validateForm(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
                     // Third Card: Action Buttons
                     Card(
                       child: Padding(
@@ -291,7 +212,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
                               valueListenable: _isFormValid,
                               builder: (context, value, child) {
                                 return ElevatedButton(
-                                  onPressed: value  ?_submitRegistration : null,
+                                  onPressed: value  ? ()=>_submitRegistration(context) : null,
                                   child: const Text('Register'),
                                 );
                               }
@@ -317,15 +238,15 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   }
 
   void _validateForm() {
-    // currentState?.validate() restituisce true se tutti i validatori passano
-    // Usiamo l'operatore di assegnazione per aggiornare il ValueNotifier
     _isFormValid.value = _formKey.currentState?.validate() ?? false;
   }
 
-  void _submitRegistration() async {
+  void _submitRegistration(BuildContext context) async {
     var result = await _registerAccount();
     if (result) {
-      _navigatorState?.pushReplacementNamed('/login');
+      if(context.mounted) {
+        context.go('/login');
+      }
     }
   }
 
@@ -402,43 +323,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
     return null;
   }
 
-  ///
-  /// Confirm Master Password validation function. It checks if the confirmed master password matches the chosen master password.
-  ///
-  ///
-  String? _confirmMasterPassword(String? value) {
-    var currentMasterPassword = _masterPasswordController.text.trim();
-
-    if (value == null || value.isEmpty) {
-
-      return 'Please confirm your master password';
-    }
-    if (value != currentMasterPassword) {
-      return 'Passwords do not match';
-    }
-    //checkForEnableRegisterButton();
-    return null;
-  }
-
-  ///
-  /// Validation function for master password
-  ///
-  String? _validateMasterPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your master password';
-    }
-
-    var isPasswordMeetCriteria = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_])[A-Za-z\d@$!%*?&_]{10,}$',
-    ).hasMatch(value);
-
-    if (!isPasswordMeetCriteria) {
-      return "The password does not meet the criteria. 10 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character.";
-    }
-
-    //checkForEnableRegisterButton();
-    return null;
-  }
 
   Future<bool> _registerAccount() async {
     try {
@@ -465,32 +349,15 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
       registrationData.email = _emailController.text.trim();
       registrationData.password = _passwordController.text.trim();
       registrationData.passwordConfirmed = _confirmPasswordController.text.trim() == registrationData.password;
-      registrationData.masterPassword = _masterPasswordController.text.trim();
-      registrationData.masterPasswordConfirmed = _confirmMasterPasswordController.text.trim() == registrationData.masterPassword;
 
-      var storageService = await ref.read(storageServiceProvider.future);
-
-      if (registrationData.masterPasswordConfirmed &&
-          registrationData.passwordConfirmed) {
-        // store master password in secure storage
-
-
-        await storageService.storeMasterPassword(
-          registrationData.masterPassword,
-        );
-      }
-
-      // check if master password is ready stored in secure storage
-      var isMasterPasswordExists = await storageService.isMasterPasswordExists();
-
-      if(!isMasterPasswordExists) {
+      if (!registrationData.passwordConfirmed) {
         _scaffoldMessenger?.showSnackBar(
-          const SnackBar(content: Text('Failed to store master password')),
+          const SnackBar(content: Text('Passwords do not match')),
         );
         return false;
       }
       // create account
-      var accountService = await ref.read(registrationServiceProvider.future);
+      var accountService =  locator<IRegistrationService>();
 
       var isAccountCreated = await accountService.registerAccount(
         registrationData,
@@ -508,7 +375,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
         const SnackBar(content: Text('Failed to create account')),
       );
     } catch (e) {
-      _cleanUpFailedRegistration();
+     await _cleanUpFailedRegistration();
       _scaffoldMessenger?.showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
@@ -525,12 +392,12 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   Future<void> _cleanUpFailedRegistration() async {
     // Remove the master password from secure storage if registration fails
     try {
-      var storageService = await ref.read(storageServiceProvider.future);
+      var storageService = locator<IStorageService>();
 
       var masterPassword = await storageService.loadMasterPassword();
 
       if (masterPassword.isNotEmpty) {
-        var accountService = await ref.read(registrationServiceProvider.future);
+        var accountService = locator<IRegistrationService>();
 
         var dbExists = await accountService.dbCreated();
 
@@ -538,8 +405,6 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
           // delete db
           await accountService.deleteDatabase();
         }
-
-        await storageService.removeMasterPassword();
       }
     } on Exception catch (e, stackTrace) {
       debugPrintStack(

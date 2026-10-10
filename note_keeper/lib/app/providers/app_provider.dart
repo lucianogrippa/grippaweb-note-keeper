@@ -1,35 +1,63 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:note_keeper/app/domain/auth_state.dart';
+import 'package:get_it/get_it.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';
+import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/repositories/account_repository.dart';
 import 'package:note_keeper/app/services/account_service.dart';
 import 'package:note_keeper/app/services/database_service.dart';
+import 'package:note_keeper/app/services/registration_service.dart';
 import 'package:note_keeper/app/services/storage_service.dart';
 
-/// Database provider
-final Provider<IDatabaseService> databaseProvider = Provider<IDatabaseService>((ref) {
-  return DatabaseService();
-});
+// Create a global instance (or use GetIt.instance)
+final locator = GetIt.instance;
 
-/// provide storage service
-final FutureProvider<IStorageService> storageServiceProvider = FutureProvider<IStorageService>((ref) async {
-  var storageService = StorageService();
-  await storageService.build();
-  return storageService;
-});
+void configureLocators() {
 
 
-/// provide account service
-final FutureProvider<IAccountService> accountServiceProvider = FutureProvider<IAccountService>((ref) async {
+  locator.registerSingletonAsync<IStorageService>(
+    () async {
+      var _storage = StorageService();
+      await _storage.build();
+      return _storage;
+    },
+  );
 
-    IStorageService storageService = await ref.read(storageServiceProvider.future);
-    IAccountRepository accountRepository = await ref.watch(accountRepositoryProvider.future);
+  // DB and Repositories
+  // Register your services here
+  locator.registerSingletonWithDependencies<IDatabaseService>(
+    () => DatabaseService(storageService: locator<IStorageService>()),
+    dependsOn: [IStorageService],
+  );
 
-    var accountService = IAccountService.init(storageService: storageService,
-                                                accountRepository: accountRepository);
+  locator.registerSingletonAsync<IAccountRepository>(
+    () async {
+      var _repository = IAccountRepository.create(locator<IDatabaseService>());
+      await _repository.openDatabase();
+      return _repository;
+    },
+    dependsOn: [IDatabaseService],
+  );
 
-    return accountService;
-});
+  ////////////////////////////////////////////////////////////////////////
 
-/// auth state provider
-final AsyncNotifierProvider<AuthNotifier, AuthState> authStateProvider = AsyncNotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+  locator.registerSingletonWithDependencies<IAccountService>(
+      ()=>
+    IAccountService.init(
+      storageService: locator<IStorageService>(),
+      accountRepository: locator<IAccountRepository>(),
+    ),
+    dependsOn: [IStorageService,IAccountRepository]
+  );
+
+  locator.registerSingletonWithDependencies<IRegistrationService>(
+    () => RegistrationService(
+      databaseService: locator<IDatabaseService>(),
+      accountRepository: locator<IAccountRepository>(),
+    ),
+    dependsOn: [IDatabaseService, IAccountRepository],
+  );
+
+  /// Notifiers
+  locator.registerSingletonWithDependencies(() => AuthNotifier(), dependsOn: [IStorageService,IAccountService]);
+  locator.registerSingleton<LoadingNotifier>(LoadingNotifier());
+
+}

@@ -1,88 +1,73 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:note_keeper/app/domain/registration_data.dart';
 import 'package:note_keeper/app/domain/user_account.dart';
 import 'package:note_keeper/app/domain/user_profile.dart';
-import 'package:note_keeper/app/providers/app_provider.dart';
-
-
-
-/// repository provider
-final FutureProvider<IAccountRepository> accountRepositoryProvider = FutureProvider((ref) async {
-  final databaseService = ref.watch(databaseProvider);
-  final  storageService = await ref.watch(storageServiceProvider.future);
-
-  final password = await storageService.loadMasterPassword();
-
-  if(password.isEmpty){
-    throw ArgumentError("Master Password for database cannot be empty");
-  }
-
-  await databaseService.open<UserProfile, UserProfileAdapter>(table: "user_profile", password: password);
-
-  final db = databaseService.dataSource();
-  /// inject datasource to account repository
-  return IAccountRepository.create(db);
-});
-
+import 'package:note_keeper/app/services/database_service.dart';
+import 'package:note_keeper/app/services/security_service.dart';
 
 /// Repository interface for account-related database operations
 abstract class IAccountRepository {
-
   Future<int> totalAccounts();
-
-  factory IAccountRepository.create(Box? db) => AccountRepository(db:db);
-
 
   Future<Account> findByUsername(String username);
 
-  Future<String> loadHashedPassword(String username);
+  Future<String> loadDerivedPassword(String username);
 
   Future<void> createAccount(RegistrationData data);
+
+  Future<void> updateLastAccess(String username, DateTime lastAccess);
+
+  Future<bool> isAccountExists(String username);
+
+  Future<void> openDatabase();
+
+  factory IAccountRepository.create(IDatabaseService databaseService)  => AccountRepository(databaseService: databaseService);
+
 }
 
 /// Repository implementation for account-related database operations
 class AccountRepository implements IAccountRepository {
+  Box<UserProfile>? _db;
 
-  final Box? _db;
+  final IDatabaseService _databaseService;
 
-  AccountRepository({required this._db});
+  AccountRepository({required this._databaseService});
+
 
   @override
   Future<int> totalAccounts() async {
-    final result = await _db.get("user_profile", defaultValue: null);
-    return Sqflite.firstIntValue(result) ?? 0;
+    return _db?.length ?? 0;
   }
 
   @override
   Future<Account> findByUsername(String username) async {
-    final result = await _db?.values.firstOrNull(where: (row) => row['username'] == username);
+    final result = await _db?.values
+        .where((row) => row.email == username)
+        .firstOrNull;
 
-    if (result.isNotEmpty) {
-      final row = result.first;
-      return Account.fromUser(user: User(
-        id: row['id'] as String,
-        username: row['username'] as String,
-        name: row['name'] as String,
-        lastname: row['lastname'] as String,
-        email: row['email'] as String,
-      ));
+    if (result != null) {
+      return Account.fromUser(
+        user: User(
+          id: result.id,
+          name: result.name,
+          lastname: result.lastname,
+          email: result.email,
+        ),
+        expiredDate: DateTime.now().add(const Duration(days: 15)),
+      );
     }
 
     return Account.empty();
   }
 
   @override
-  Future<String> loadHashedPassword(String username) async {
-    final result = await _db.query(
-      'user_profile',
-      columns: ['password_hash'],
-      where: 'username = ?',
-      whereArgs: [username],
-    );
+  Future<String> loadDerivedPassword(String username) async {
+    final result = await _db?.values
+        .where((row) => row.email == username)
+        .firstOrNull;
 
-    if (result.isNotEmpty) {
-      return result.first['password_hash'] as String;
+    if (result != null && result.id.isNotEmpty) {
+      return result.passwordHash;
     }
 
     return '';
@@ -90,27 +75,29 @@ class AccountRepository implements IAccountRepository {
 
   @override
   Future<void> createAccount(RegistrationData data) async {
-
-    if(data.masterPasswordConfirmed && data.passwordConfirmed){
-
+    if (data.passwordConfirmed) {
       // check if account exists
       var accountExist = await totalAccounts() > 0;
 
-      if(accountExist){
+      if (accountExist) {
         throw ArgumentError("Account already exists");
       }
 
-      await _db.insert(
-        'user_profile',
-        {
-          'username': data.username,
-          'name': data.name,
-          'lastname': data.lastname,
-          'email': data.email,
-          'password_hash': data.password,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        },
+      var hashPassword = _databaseService.hashPassword(data.password);
+
+      // generate id
+      final uniqueId = SecurityService.generateUniqueKeySalt();
+
+      await _db?.put(
+        uniqueId,
+        UserProfile()
+          ..id= uniqueId
+          ..name = data.name
+          ..lastname = data.lastname
+          ..email = data.email
+          ..passwordHash = hashPassword
+          ..createdAt = DateTime.now()
+          ..lastAccess = DateTime.now(),
       );
 
       return Future.value();
@@ -119,5 +106,35 @@ class AccountRepository implements IAccountRepository {
     throw ArgumentError("Master Password and Password must be confirmed");
   }
 
-}
+  @override
+  Future<void> updateLastAccess(String username, DateTime lastAccess) {
+    final result =
+        _db?.values.where((row) => row.email == username).toList() ?? [];
 
+    if (result.isNotEmpty) {
+      final row = result.first;
+      row.lastAccess = lastAccess;
+
+      _db?.put(row.id, row);
+      return Future.value();
+    }
+
+    throw ArgumentError("User not found");
+  }
+
+  @override
+  Future<bool> isAccountExists(String username) async {
+    final result = await _db?.values
+        .where((row) => row.email == username)
+        .firstOrNull;
+    return result != null;
+  }
+
+  @override
+  Future<void> openDatabase() async {
+    _db = await _databaseService.open<UserProfile>(
+      table: 'user_profile',
+      adapter: UserProfileAdapter(),
+    );
+  }
+}

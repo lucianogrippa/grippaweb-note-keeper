@@ -34,6 +34,10 @@ abstract class IStorageService {
 
   Future<void> removeMasterPassword();
 
+  Future<String?> generateAndStoreMasterPassword();
+
+  StorageState state();
+
 }
 
 class StorageService  implements IStorageService {
@@ -42,6 +46,12 @@ class StorageService  implements IStorageService {
   late final SecurityService _securityService;
 
   late final FlutterSecureStorage _storage;
+
+  StorageState _state = StorageState();
+
+
+  @override
+  StorageState state() => _state;
 
   @override
   Future<String> loadSaltKey() async {
@@ -97,14 +107,28 @@ class StorageService  implements IStorageService {
     // load auth token
     final authToken = await loadStoredAuthToken();
 
-    return StorageState()
+    _state = StorageState()
       ..hasAuthToken = authToken.isNotEmpty;
+
+    return _state;
   }
 
   /// Load Stored Auth Token from secure storage
   @override
   Future<String> loadStoredAuthToken() async {
-    return await _storage.read(key: _authTokenKey) ?? '';
+
+    _state.storedToken = await _storage.read(key: _authTokenKey) ?? '';
+    _state.hasAuthToken = _state.storedToken!.isNotEmpty;
+    return _state.storedToken!;
+  }
+
+  @override
+  String deriveSignKeyFromPassword(String password) {
+
+    var hexPassword= SecurityService.sha256Hex(password);
+
+    var derivedKey = _securityService.deriveKey(hexPassword);
+    return derivedKey;
   }
 
   /// Store Auth Token in secure storage
@@ -137,15 +161,6 @@ class StorageService  implements IStorageService {
   }
 
   @override
-  String deriveSignKeyFromPassword(String password) {
-
-    var hexPassword= SecurityService.sha256Hex(password);
-
-    var derivedKey = _securityService.deriveKey(hexPassword);
-    return derivedKey;
-  }
-
-  @override
   Future<String> loadMasterPassword() async {
     return await _storage.read(key: _masterPwdKey) ?? '';
   }
@@ -175,5 +190,15 @@ class StorageService  implements IStorageService {
   @override
   Future<void> removeMasterPassword() {
     return _storage.delete(key: _masterPwdKey);
+  }
+
+  @override
+  Future<String?> generateAndStoreMasterPassword() async {
+    var password = SecurityService.generateUniqueKeySalt();
+
+    var hashPassword = SecurityService.sha256Hex(password);
+
+    await storeMasterPassword(hashPassword);
+    return password;
   }
 }

@@ -1,6 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_keeper/app/domain/registration_data.dart';
-import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/repositories/account_repository.dart';
 import 'package:note_keeper/app/services/database_service.dart';
 
@@ -46,11 +44,3 @@ class RegistrationService implements IRegistrationService {
     await _databaseService.deleteDatabase();
   }
 }
-
-var registrationServiceProvider = FutureProvider<IRegistrationService>((ref) async {
-  final databaseService = ref.read(databaseProvider);
-  final accountRepository = await ref.read(accountRepositoryProvider.future);
-
-  return RegistrationService(
-      accountRepository: accountRepository, databaseService: databaseService);
-});

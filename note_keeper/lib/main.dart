@@ -1,24 +1,17 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce/hive.dart';
-import 'package:hive_ce_flutter/adapters.dart';
+import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/providers/router_provider.dart';
 import 'package:note_keeper/app/services/database_service.dart';
-import 'package:note_keeper/app/services/security_service.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
 /// Main Application class using router provider
-class MainApp extends ConsumerWidget {
+class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
 
-    final router = ref.watch(routerProvider);
+    final router = routerProvider();
 
     /// Using Material app routing for settings go_router
     return MaterialApp.router(
@@ -32,15 +25,16 @@ class MainApp extends ConsumerWidget {
 }
 
 void main() async {
-  await _initDb();
-  runApp(
-      ProviderScope(
-          child: const MainApp()
-      )
-  );
+  await _init();
+  runApp(const MainApp());
 }
 
-Future<void> _initDb() async {
+Future<void> _init() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseService.create().init();
+
+  await DatabaseService.init();
+
+  configureLocators();
+
+  await locator.allReady();
 }

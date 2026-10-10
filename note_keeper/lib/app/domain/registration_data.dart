@@ -2,7 +2,6 @@ class RegistrationData {
 
   late String name;
   late String lastname;
-  late String username;
   late String email;
   late String password;
   late bool passwordConfirmed;
@@ -14,7 +13,6 @@ class RegistrationData {
    factory RegistrationData.empty() => RegistrationData()
      ..name = ''
      ..lastname = ''
-     ..username = ''
      ..email = ''
      ..password = ''
      ..passwordConfirmed = false
@@ -24,7 +22,6 @@ class RegistrationData {
    factory RegistrationData.fromMap(Map<String, dynamic> map) => RegistrationData()
      ..name = map['name'] ?? ''
      ..lastname = map['lastname'] ?? ''
-     ..username = map['username'] ?? ''
      ..email = map['email'] ?? ''
      ..password = map['password'] ?? ''
      ..passwordConfirmed = map['passwordConfirmed'] ?? false

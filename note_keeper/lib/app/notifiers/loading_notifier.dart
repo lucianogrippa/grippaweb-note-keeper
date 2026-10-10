@@ -1,17 +1,21 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Notifier state for loading widget
-class LoadingNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
+class LoadingNotifier extends ChangeNotifier {
+  bool _isLoading = false;
+  LoadingNotifier();
 
   /// show loading
-  void show() => state = true;
+  void show() {
+    _isLoading = true;
+    notifyListeners();
+  }
 
   // hide loading
-  void hide() => state = false;
-}
+  void hide() {
+    _isLoading = false;
+    notifyListeners();
+  }
 
-final loadingProvider = NotifierProvider<LoadingNotifier, bool>(() {
-  return LoadingNotifier();
-});
+  bool get isLoading => _isLoading;
+}
