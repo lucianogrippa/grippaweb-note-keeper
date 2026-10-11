@@ -1,7 +1,7 @@
-import 'package:hive_ce/hive.dart';
 import 'package:note_keeper/app/domain/registration_data.dart';
 import 'package:note_keeper/app/domain/user_account.dart';
 import 'package:note_keeper/app/domain/user_profile.dart';
+import 'package:note_keeper/app/repositories/base_repository.dart';
 import 'package:note_keeper/app/services/database_service.dart';
 import 'package:note_keeper/app/services/security_service.dart';
 
@@ -19,31 +19,27 @@ abstract class IAccountRepository {
 
   Future<bool> isAccountExists(String username);
 
-  Future<void> openDatabase();
+  Future<void> open();
 
-  factory IAccountRepository.create(IDatabaseService databaseService)  => AccountRepository(databaseService: databaseService);
-
+  factory IAccountRepository.create(IDatabaseService databaseService) =>
+      AccountRepository(databaseService: databaseService);
 }
 
 /// Repository implementation for account-related database operations
-class AccountRepository implements IAccountRepository {
-  Box<UserProfile>? _db;
-
-  final IDatabaseService _databaseService;
-
-  AccountRepository({required this._databaseService});
-
+class AccountRepository extends BaseRepository<UserProfile>
+    implements IAccountRepository {
+  AccountRepository({required IDatabaseService databaseService}) {
+    this.databaseService = databaseService;
+  }
 
   @override
   Future<int> totalAccounts() async {
-    return _db?.length ?? 0;
+    return db.length;
   }
 
   @override
   Future<Account> findByUsername(String username) async {
-    final result = await _db?.values
-        .where((row) => row.email == username)
-        .firstOrNull;
+    final result = db.values.where((row) => row.email == username).firstOrNull;
 
     if (result != null) {
       return Account.fromUser(
@@ -62,9 +58,7 @@ class AccountRepository implements IAccountRepository {
 
   @override
   Future<String> loadDerivedPassword(String username) async {
-    final result = await _db?.values
-        .where((row) => row.email == username)
-        .firstOrNull;
+    final result = db.values.where((row) => row.email == username).firstOrNull;
 
     if (result != null && result.id.isNotEmpty) {
       return result.passwordHash;
@@ -83,15 +77,15 @@ class AccountRepository implements IAccountRepository {
         throw ArgumentError("Account already exists");
       }
 
-      var hashPassword = _databaseService.hashPassword(data.password);
+      var hashPassword = databaseService.hashPassword(data.password);
 
       // generate id
       final uniqueId = SecurityService.generateUniqueKeySalt();
 
-      await _db?.put(
+      await db.put(
         uniqueId,
         UserProfile()
-          ..id= uniqueId
+          ..id = uniqueId
           ..name = data.name
           ..lastname = data.lastname
           ..email = data.email
@@ -100,23 +94,22 @@ class AccountRepository implements IAccountRepository {
           ..lastAccess = DateTime.now(),
       );
 
-      return Future.value();
+      return;
     }
 
     throw ArgumentError("Master Password and Password must be confirmed");
   }
 
   @override
-  Future<void> updateLastAccess(String username, DateTime lastAccess) {
-    final result =
-        _db?.values.where((row) => row.email == username).toList() ?? [];
+  Future<void> updateLastAccess(String username, DateTime lastAccess) async {
+    final result = db.values.where((row) => row.email == username).toList();
 
     if (result.isNotEmpty) {
       final row = result.first;
       row.lastAccess = lastAccess;
 
-      _db?.put(row.id, row);
-      return Future.value();
+      db.put(row.id, row);
+      return;
     }
 
     throw ArgumentError("User not found");
@@ -124,17 +117,12 @@ class AccountRepository implements IAccountRepository {
 
   @override
   Future<bool> isAccountExists(String username) async {
-    final result = await _db?.values
-        .where((row) => row.email == username)
-        .firstOrNull;
+    final result = db.values.where((row) => row.email == username).firstOrNull;
     return result != null;
   }
 
   @override
-  Future<void> openDatabase() async {
-    _db = await _databaseService.open<UserProfile>(
-      table: 'user_profile',
-      adapter: UserProfileAdapter(),
-    );
+  Future<void> open() async {
+    await super.openDatabase(UserProfileAdapter(), 'user_profile');
   }
 }

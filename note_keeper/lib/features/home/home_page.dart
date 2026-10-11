@@ -7,25 +7,25 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
           IconButton(
-            onPressed: () async {
-               await locator<AuthNotifier>().logout();
-
-               if(context.mounted) {
-                 context.go("/login");
-               }
-            },
+            onPressed: () => _logout(context),
             icon: const Icon(Icons.logout),
           ),
         ],
       ),
     );
+  }
+
+  void _logout(BuildContext context) async {
+    await locator<AuthNotifier>().logout();
+
+    if (context.mounted) {
+      context.go("/login");
+    }
   }
 }

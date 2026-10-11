@@ -15,9 +15,9 @@ void configureLocators() {
 
   locator.registerSingletonAsync<IStorageService>(
     () async {
-      var _storage = StorageService();
-      await _storage.build();
-      return _storage;
+      var storage = StorageService();
+      await storage.build();
+      return storage;
     },
   );
 
@@ -30,9 +30,9 @@ void configureLocators() {
 
   locator.registerSingletonAsync<IAccountRepository>(
     () async {
-      var _repository = IAccountRepository.create(locator<IDatabaseService>());
-      await _repository.openDatabase();
-      return _repository;
+      var repository = IAccountRepository.create(locator<IDatabaseService>());
+      await repository.open();
+      return repository;
     },
     dependsOn: [IDatabaseService],
   );

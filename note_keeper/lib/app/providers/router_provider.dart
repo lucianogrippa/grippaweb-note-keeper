@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/domain/auth_state.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';

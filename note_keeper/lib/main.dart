@@ -15,7 +15,8 @@ class MainApp extends StatelessWidget {
 
     /// Using Material app routing for settings go_router
     return MaterialApp.router(
-      routerConfig: router,
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
