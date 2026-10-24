@@ -27,7 +27,16 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 
 -- ===========================
--- Table: groups
+-- Table: groups-- Table: categories
+-- ===========================
+CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id)
 -- ===========================
 CREATE TABLE IF NOT EXISTS groups (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),

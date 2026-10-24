@@ -202,5 +202,8 @@ class LoginPageState extends State<LoginPage>{
       return;
     }
     _errorMessage.value = authNotifier.state.authError;
+
+    // reset form
+    _formKey.currentState?.reset();
   }
 }

@@ -164,7 +164,7 @@ class DatabaseService extends IDatabaseService {
   static Future<void> init() async {
     var userDataPath = await getApplicationDocumentsDirectory();
 
-    var basePath = path.join(userDataPath.path,SecurityService.sha256Hex("note_keeper_db"));
+    var basePath = path.join(userDataPath.path,"note-keeper",".${SecurityService.sha256Hex("note_keeper_db")}");
 
     // create folders if not exist
     await Directory(basePath).create(recursive: true);

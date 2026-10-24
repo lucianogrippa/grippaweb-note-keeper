@@ -28,6 +28,7 @@ abstract class IAccountRepository {
 /// Repository implementation for account-related database operations
 class AccountRepository extends BaseRepository<UserProfile>
     implements IAccountRepository {
+
   AccountRepository({required IDatabaseService databaseService}) {
     this.databaseService = databaseService;
   }

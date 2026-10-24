@@ -7,6 +7,8 @@ import 'package:note_keeper/app/services/database_service.dart';
 import 'package:note_keeper/app/services/registration_service.dart';
 import 'package:note_keeper/app/services/storage_service.dart';
 
+import '../repositories/category_repository.dart';
+
 // Create a global instance (or use GetIt.instance)
 final locator = GetIt.instance;
 
@@ -31,6 +33,15 @@ void configureLocators() {
   locator.registerSingletonAsync<IAccountRepository>(
     () async {
       var repository = IAccountRepository.create(locator<IDatabaseService>());
+      await repository.open();
+      return repository;
+    },
+    dependsOn: [IDatabaseService],
+  );
+
+  locator.registerSingletonAsync<INoteCategoryRepository>(
+    () async {
+      var repository = INoteCategoryRepository.create(locator<IDatabaseService>());
       await repository.open();
       return repository;
     },
