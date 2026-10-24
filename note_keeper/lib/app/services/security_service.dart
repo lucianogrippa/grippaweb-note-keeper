@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:argon2/argon2.dart';
 import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
+import 'package:encrypt/encrypt.dart';
 
 class SecurityService {
 
@@ -82,6 +83,34 @@ class SecurityService {
     return digest.toString();
 
   }
+  static Future<String?> encryptAESText(String content, String masterKey , String iv) async {
+
+    final key = Key.fromUtf8(masterKey);
+    final iv0 = IV.fromUtf8(iv);
+
+    final encrypter = Encrypter(AES(key, mode: AESMode.gcm));
+
+    final encrypted = encrypter.encrypt(content, iv: iv0);
+
+    return encrypted.base64;
+
+  }
+
+  static Future<String?> decryptAESText(String content, String masterKey , String iv) async {
+
+    final key = Key.fromUtf8(masterKey);
+    final ivEncoded= IV.fromUtf8(iv);
+
+    final encrypter = Encrypter(AES(key, mode: AESMode.gcm));
+
+    try {
+      final decrypted = encrypter.decrypt64(content, iv: ivEncoded);
+      return decrypted;
+    } catch (e) {
+      return null;
+    }
+  }
+
 
   factory SecurityService.initV13Salt() => SecurityService._v13(SecurityService.generateUniqueKeySalt());
 
@@ -90,5 +119,9 @@ class SecurityService {
   factory SecurityService.initV10FixedSalt(String salt) => SecurityService._v10(salt);
 
   factory SecurityService.initV13FixedSalt(String salt) => SecurityService._v13(salt);
+
+
+
+
 
 }
