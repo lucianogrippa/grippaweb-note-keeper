@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:note_keeper/app/notifiers/loading_notifier.dart';
+import 'package:note_keeper/app/providers/app_provider.dart';
 
 class LoadingOverlay extends StatelessWidget {
-  final bool isLoading;
   final Widget child;
 
-  const LoadingOverlay({
-    super.key,
-    required this.isLoading,
-    required this.child,
-  });
+  const LoadingOverlay({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        child,
-        if (isLoading) ...[
-          // Transparent Background
-          const ModalBarrier(
-            dismissible: false,
-            color: Colors.black54,
-          ),
-          // Loading Indicator
-          const Center(
-            child: CircularProgressIndicator(),
+    final loadingNotifier = locator<LoadingNotifier>();
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          child,
+          ListenableBuilder(
+            listenable: loadingNotifier,
+            builder: (context, _) {
+              if (!loadingNotifier.isLoading) return const SizedBox.shrink();
+              return const Stack(
+                children: [
+                  ModalBarrier(dismissible: false, color: Colors.white38),
+                  Center(child: CircularProgressIndicator()),
+                ],
+              );
+            },
           ),
         ],
-      ],
+      ),
     );
   }
 }

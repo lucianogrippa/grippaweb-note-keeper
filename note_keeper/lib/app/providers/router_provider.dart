@@ -23,14 +23,17 @@ GoRouter routerProvider() {
 
   final storageService = locator<IStorageService>();
   final accountService = locator<IAccountService>();
+  final loadingNotifier = locator<LoadingNotifier>();
 
   return GoRouter(
-
     initialLocation: '/home',
     refreshListenable: notifier,
     redirect: (context, state) async {
 
+      loadingNotifier.show();
+
       if(!await storageService.isMasterPasswordExists()) {
+        loadingNotifier.hide();
         // go to registration page if master password is not set
         return '/registration';
       }
@@ -38,6 +41,7 @@ GoRouter routerProvider() {
       final isAccountExists = await accountService.isAccountExists();
 
       if(!isAccountExists && state.matchedLocation != '/registration') {
+        loadingNotifier.hide();
         return '/registration';
       }
 
@@ -54,18 +58,19 @@ GoRouter routerProvider() {
 
 
       if (needAuth && !loggedIn) {
+
+        loadingNotifier.hide();
         return '/login';
       }
 
 
+      loadingNotifier.hide();
       return null;
     },
     routes: [
       ShellRoute(
         builder: (context, state, child) {
-          final isLoading = locator<LoadingNotifier>().isLoading;
           return LoadingOverlay(
-            isLoading: isLoading,
             child: child,
           );
         },

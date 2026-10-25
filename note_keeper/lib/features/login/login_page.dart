@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/domain/auth_state.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';
+import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class LoginPageState extends State<LoginPage>{
   final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(true);
 
   final ValueNotifier<String> _errorMessage = ValueNotifier<String>('');
+  final loadingNotifier = locator<LoadingNotifier>();
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class LoginPageState extends State<LoginPage>{
 
     var boxH = screenSize.height * 0.9;
     var boxW  = screenSize.width * 0.9;
+
 
 
     return Scaffold(
@@ -127,7 +130,13 @@ class LoginPageState extends State<LoginPage>{
                     valueListenable: _formValid,
                     builder: (context, value, child) {
                       return ElevatedButton(
-                        onPressed: value ? _login : null,
+                        onPressed: value ? () {
+                          loadingNotifier.show();
+                          Future.delayed(const Duration(seconds: 1), () {
+                            _login();
+                          });
+
+                        } : null,
                         child: const Text('Login'),
                       );
                     }
@@ -178,7 +187,11 @@ class LoginPageState extends State<LoginPage>{
   }
 
   Future<void> _login() async {
+
+
+
     if (!_formKey.currentState!.validate()) {
+      loadingNotifier.hide();
       return;
     }
 
@@ -191,16 +204,20 @@ class LoginPageState extends State<LoginPage>{
       password
     );
 
+    if (!mounted) {
+      loadingNotifier.hide();
+      return;
+    }
+
     final authStatus = authNotifier.state.status;
 
     if(authStatus == AuthStatus.authenticated) {
       // Navigate to the desired route
-      if (context.mounted) {
-        context.go('/home');
-      }
-
+      context.go('/home');
       return;
     }
+
+    loadingNotifier.hide();
     _errorMessage.value = authNotifier.state.authError;
 
     // reset form

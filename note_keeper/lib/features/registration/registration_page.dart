@@ -42,7 +42,6 @@ class RegistrationPageState extends State<RegistrationPage> {
   }
 
   ScaffoldMessengerState? _scaffoldMessenger;
-  NavigatorState? _navigatorState;
 
   @override
   void dispose() {
@@ -57,7 +56,6 @@ class RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     _scaffoldMessenger = ScaffoldMessenger.of(context);
-    _navigatorState = Navigator.of(context);
     var screenSize = MediaQuery.of(context).size;
 
     var boxW = screenSize.width;
