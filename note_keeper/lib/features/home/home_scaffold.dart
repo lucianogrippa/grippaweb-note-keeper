@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
+import 'package:note_keeper/features/widgets/theme_mode_selector.dart';
 
 class HomeScaffold extends StatelessWidget {
   const HomeScaffold({
@@ -26,6 +27,7 @@ class HomeScaffold extends StatelessWidget {
         title: title,
         actions: [
           ...actions,
+          const ThemeModeSelector(),
           IconButton(
             onPressed: () async {
               await locator<AuthNotifier>().logout();

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/services/registration_service.dart';
 import 'package:note_keeper/app/services/storage_service.dart';
+import 'package:note_keeper/features/widgets/theme_mode_selector.dart';
 
 import '../../app/domain/registration_data.dart';
 
@@ -57,6 +58,7 @@ class RegistrationPageState extends State<RegistrationPage> {
   Widget build(BuildContext context) {
     _scaffoldMessenger = ScaffoldMessenger.of(context);
     return Scaffold(
+      appBar: AppBar(actions: const [ThemeModeSelector()]),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
