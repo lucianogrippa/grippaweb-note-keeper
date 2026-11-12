@@ -32,6 +32,7 @@ class NoteCategoryDialog extends StatelessWidget {
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
               ),
+              const SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),

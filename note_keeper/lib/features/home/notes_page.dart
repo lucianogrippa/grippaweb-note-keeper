@@ -604,6 +604,7 @@ class _NoteEditorState extends State<_NoteEditor> {
                     ? 'Title is required'
                     : null,
               ),
+              const SizedBox(height: 16),
               if (_visible)
                 TextFormField(
                   controller: _content,
@@ -616,6 +617,7 @@ class _NoteEditorState extends State<_NoteEditor> {
                   title: Text('Content'),
                   subtitle: Text('••••••••'),
                 ),
+              const SizedBox(height: 8),
               if (widget.note?.isEncrypted == true)
                 IconButton(
                   tooltip: _visible ? 'Hide content' : 'Show content',
@@ -632,9 +634,14 @@ class _NoteEditorState extends State<_NoteEditor> {
                     : (value) => setState(() => _encrypted = value),
               ),
               if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
             ],
           ),

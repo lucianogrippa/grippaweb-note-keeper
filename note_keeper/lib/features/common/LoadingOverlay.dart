@@ -19,10 +19,13 @@ class LoadingOverlay extends StatelessWidget {
             listenable: loadingNotifier,
             builder: (context, _) {
               if (!loadingNotifier.isLoading) return const SizedBox.shrink();
-              return const Stack(
+              return Stack(
                 children: [
-                  ModalBarrier(dismissible: false, color: Colors.white38),
-                  Center(child: CircularProgressIndicator()),
+                  ModalBarrier(
+                    dismissible: false,
+                    color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32),
+                  ),
+                  const Center(child: CircularProgressIndicator()),
                 ],
               );
             },

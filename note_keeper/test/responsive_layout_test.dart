@@ -12,12 +12,15 @@ import 'package:note_keeper/app/repositories/category_repository.dart';
 import 'package:note_keeper/app/repositories/groups_repository.dart';
 import 'package:note_keeper/app/repositories/notes_repository.dart';
 import 'package:note_keeper/app/services/account_service.dart';
+import 'package:note_keeper/app/theme/app_theme.dart';
+import 'package:note_keeper/app/theme/theme_controller.dart';
 import 'package:note_keeper/features/home/groups_page.dart';
 import 'package:note_keeper/features/home/home_page.dart';
 import 'package:note_keeper/features/home/notes_page.dart';
 import 'package:note_keeper/features/login/login_page.dart';
 import 'package:note_keeper/features/registration/registration_page.dart';
 import 'package:note_keeper/features/widgets/responsive_grid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'groups_page_test.dart' show FakeAccountService;
 import 'note_search_test.dart' show SearchAuth, SearchCategories, SearchGroups;
@@ -26,8 +29,11 @@ import 'notes_repository_test.dart'
 
 void main() {
   late GoRouter router;
+  late ThemeController themeController;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({'theme_mode': 'dark'});
+    themeController = ThemeController(await SharedPreferences.getInstance());
     final categories = SearchCategories();
     for (final category in categories.categories) {
       category
@@ -89,6 +95,7 @@ void main() {
   tearDown(() async {
     router.dispose();
     await locator.reset();
+    themeController.dispose();
   });
 
   for (final (size, columns) in [
@@ -105,7 +112,17 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        ThemeControllerScope(
+          controller: themeController,
+          child: MaterialApp.router(
+            routerConfig: router,
+            theme: AppTheme.create(Brightness.light),
+            darkTheme: AppTheme.create(Brightness.dark),
+            themeMode: themeController.mode,
+          ),
+        ),
+      );
       await tester.pumpAndSettle(const Duration(milliseconds: 400));
       for (final path in ['/home', '/groups/a', '/notes/0']) {
         router.go(path);
@@ -122,6 +139,7 @@ void main() {
           columns,
         );
         expect(find.byTooltip('Search notes'), findsOneWidget);
+        expect(find.byTooltip('Theme'), findsOneWidget);
         expect(tester.takeException(), isNull, reason: path);
       }
       for (final path in ['/login', '/registration']) {
@@ -143,13 +161,19 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpWidget(
-      MaterialApp.router(
-        routerConfig: router,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: const TextScaler.linear(2)),
-          child: child!,
+      ThemeControllerScope(
+        controller: themeController,
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.create(Brightness.light),
+          darkTheme: AppTheme.create(Brightness.dark),
+          themeMode: themeController.mode,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
         ),
       ),
     );

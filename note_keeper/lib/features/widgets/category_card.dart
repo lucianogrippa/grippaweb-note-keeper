@@ -46,7 +46,9 @@ class CategoryCard extends StatelessWidget {
                       category.description,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.black.withAlpha(153)),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),

@@ -5,6 +5,7 @@ import 'package:note_keeper/app/domain/auth_state.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';
 import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
+import 'package:note_keeper/features/widgets/theme_mode_selector.dart';
 
 class LoginPage extends StatefulWidget {
 
@@ -58,6 +59,7 @@ class LoginPageState extends State<LoginPage>{
 
 
     return Scaffold(
+      appBar: AppBar(actions: const [ThemeModeSelector()]),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
@@ -144,7 +146,7 @@ class LoginPageState extends State<LoginPage>{
                       if (value.isNotEmpty) {
                         return Text(
                           value,
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
                         );
                       }
                       return const SizedBox.shrink();
