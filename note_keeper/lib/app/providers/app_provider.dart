@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:note_keeper/app/notifiers/auth_notifier.dart';
 import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/notifiers/note_category_notifier.dart';
+import 'package:note_keeper/app/notifiers/note_groups_notifier.dart';
 import 'package:note_keeper/app/repositories/account_repository.dart';
 import 'package:note_keeper/app/repositories/groups_repository.dart';
 import 'package:note_keeper/app/repositories/notes_repository.dart';
@@ -43,6 +44,14 @@ void registerNotifier() {
   locator.registerSingletonWithDependencies(
     () => NoteCategoryNotifier(locator<INoteCategoryRepository>()),
     dependsOn: [INoteCategoryRepository],
+  );
+
+  locator.registerSingletonWithDependencies(
+    () => NoteGroupsNotifier(
+      locator<INoteCategoryRepository>(),
+      locator<INoteGroupRepository>(),
+    ),
+    dependsOn: [INoteCategoryRepository, INoteGroupRepository],
   );
 }
 

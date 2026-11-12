@@ -54,6 +54,7 @@ class NoteGroupRepository extends BaseRepository<NoteGroups> implements INoteGro
     group.id = SecurityService.generateUniqueKeySalt();
 
     group.createdAt = DateTime.now();
+    group.updatedAt = group.createdAt;
 
     await db.put(group.id, group);
     return group;
@@ -66,6 +67,7 @@ class NoteGroupRepository extends BaseRepository<NoteGroups> implements INoteGro
       return null;
     }
 
+    group.updatedAt = DateTime.now();
     await db.put(group.id, group);
 
     return group;

@@ -57,24 +57,21 @@ class LoginPageState extends State<LoginPage>{
     _errorMessage.value = actualStatus.authError;
 
 
-    // get device screen size
-    var screenSize = MediaQuery.of(context).size;
-
-    var boxH = screenSize.height * 0.9;
-    var boxW  = screenSize.width * 0.9;
-
-
-
     return Scaffold(
-      body: Padding(
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Center(
-            child: SizedBox(
-              width: boxW,
-              height: boxH,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 480,
+                minHeight: (constraints.maxHeight - 40).clamp(0, double.infinity),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,6 +153,9 @@ class LoginPageState extends State<LoginPage>{
                 ],
               ),
             ),
+          ),
+        ),
+      ),
           ),
         ),
       ),

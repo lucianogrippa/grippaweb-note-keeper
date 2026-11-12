@@ -5,8 +5,11 @@ import 'package:note_keeper/app/notifiers/auth_notifier.dart';
 import 'package:note_keeper/app/notifiers/loading_notifier.dart';
 import 'package:note_keeper/app/notifiers/note_category_notifier.dart';
 import 'package:note_keeper/app/providers/app_provider.dart';
+import 'package:note_keeper/features/home/home_scaffold.dart';
+import 'package:note_keeper/features/home/note_search.dart';
 import 'package:note_keeper/features/widgets/category_card.dart';
 import 'package:note_keeper/features/widgets/category_dialog.dart';
+import 'package:note_keeper/features/widgets/responsive_grid.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,9 +19,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
-
   final authNotifier = locator<AuthNotifier>();
   final loadNotifier = locator<LoadingNotifier>();
 
@@ -42,59 +42,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isEmpty
-                      ? null
-                      : IconButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.clear),
-                        ),
-                ),
-                onChanged: (_) => setState(() {}),
-              )
-            : const Text('Note Keeper'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                }
-              });
-            },
-            tooltip: _isSearching ? 'Close search' : 'Search categories',
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-          ),
-          IconButton(
-            onPressed: () => _showAddCategory(context),
-            icon: const Icon(Icons.add),
-          ),
-          IconButton(
-            onPressed: () => _logout(context),
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+    return HomeScaffold(
+      title: const Text('Note Keeper'),
+      actions: [
+        const NoteSearchButton(),
+        IconButton(
+          onPressed: () => _showAddCategory(context),
+          icon: const Icon(Icons.add),
+        ),
+      ],
       body: Center(
         child: ListenableBuilder(
           listenable: noteCategoryNotifier,
@@ -105,12 +62,8 @@ class _HomePageState extends State<HomePage> {
               return Text('Use add button to add categories.');
             }
 
-            return GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 1.5,
-                mainAxisExtent: MediaQuery.of(context).size.height / 3,
-              ),
+            return ResponsiveGrid(
+              itemHeight: 220,
               itemCount: totalCategories,
 
               itemBuilder: (context, index) {
@@ -259,14 +212,6 @@ class _HomePageState extends State<HomePage> {
       if (!context.mounted) return;
 
       Navigator.of(context).pop();
-    }
-  }
-
-  void _logout(BuildContext context) async {
-    await authNotifier.logout();
-
-    if (context.mounted) {
-      context.go("/login");
     }
   }
 

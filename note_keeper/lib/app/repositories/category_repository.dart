@@ -1,4 +1,5 @@
 import 'package:note_keeper/app/domain/categories.dart';
+import 'package:note_keeper/app/domain/groups.dart';
 import 'package:note_keeper/app/repositories/base_repository.dart';
 import 'package:note_keeper/app/services/database_service.dart';
 
@@ -25,6 +26,7 @@ abstract class INoteCategoryRepository {
 
   factory INoteCategoryRepository.create(IDatabaseService databaseService) =>
       NoteCategoryRepository(databaseService: databaseService);
+
 }
 
 class NoteCategoryRepository extends BaseRepository<NoteCategory>

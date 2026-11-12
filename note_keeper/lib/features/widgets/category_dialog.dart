@@ -16,26 +16,28 @@ class NoteCategoryDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = TextEditingController(text: category?.name ?? '');
-    final descriptionController = TextEditingController(text: category?.description ?? '');
-
-
+    final descriptionController = TextEditingController(
+      text: category?.description ?? '',
+    );
 
     return AlertDialog(
       title: Text(title),
       content: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.9,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-          ],
+        width: 500,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -46,9 +48,9 @@ class NoteCategoryDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             final newCategory = NoteCategory()
-            ..id = category?.id ?? ''
-            ..name= nameController.text.trim()
-            ..description = descriptionController.text.trim();
+              ..id = category?.id ?? ''
+              ..name = nameController.text.trim()
+              ..description = descriptionController.text.trim();
             onSubmit(newCategory);
             Navigator.of(context).pop();
           },
@@ -57,5 +59,4 @@ class NoteCategoryDialog extends StatelessWidget {
       ],
     );
   }
-
 }

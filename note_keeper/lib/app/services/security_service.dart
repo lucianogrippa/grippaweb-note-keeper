@@ -111,6 +111,27 @@ class SecurityService {
     }
   }
 
+  static String encryptNoteContent(String content, String masterKey) {
+    final key = Key(Uint8List.fromList(sha256.convert(utf8.encode(masterKey)).bytes));
+    final iv = IV.fromSecureRandom(12);
+    final encrypted = Encrypter(AES(key, mode: AESMode.gcm)).encrypt(content, iv: iv);
+    return 'v1:${iv.base64}:${encrypted.base64}';
+  }
+
+  static String? decryptNoteContent(String content, String masterKey) {
+    final parts = content.split(':');
+    if (parts.length != 3 || parts.first != 'v1') return null;
+    try {
+      final key = Key(Uint8List.fromList(sha256.convert(utf8.encode(masterKey)).bytes));
+      final iv = IV.fromBase64(parts[1]);
+      return Encrypter(AES(key, mode: AESMode.gcm)).decrypt64(parts[2], iv: iv);
+    } on ArgumentError {
+      return null;
+    } on Exception {
+      return null;
+    }
+  }
+
 
   factory SecurityService.initV13Salt() => SecurityService._v13(SecurityService.generateUniqueKeySalt());
 

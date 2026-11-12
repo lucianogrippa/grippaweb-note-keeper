@@ -29,4 +29,8 @@ class NoteCategoryNotifier extends ChangeNotifier {
     await _categoryRepo.edit(category);
     loadCategories(category.userId);
   }
+
+  NoteCategory getCategoryById(String categoryId) {
+    return categoryList.firstWhere((category) => category.id == categoryId);
+  }
 }

@@ -6,7 +6,9 @@ import 'package:note_keeper/app/providers/app_provider.dart';
 import 'package:note_keeper/app/services/account_service.dart';
 import 'package:note_keeper/app/services/storage_service.dart';
 import 'package:note_keeper/features/common/LoadingOverlay.dart';
+import 'package:note_keeper/features/home/groups_page.dart';
 import 'package:note_keeper/features/home/home_page.dart';
+import 'package:note_keeper/features/home/notes_page.dart';
 import 'package:note_keeper/features/login/login_page.dart';
 import 'package:note_keeper/features/registration/registration_page.dart';
 
@@ -15,6 +17,8 @@ final Map<String, bool> routesAuthList = {
   "/login": false, // no need protection by session
   "/login-error": false,
   '/home': true,
+  '/groups': true,
+  '/notes': true,
 };
 
 /// define route for entire application
@@ -79,6 +83,16 @@ GoRouter routerProvider() {
             path: '/home',
             builder: (_, _) =>  HomePage(),
           ),
+          GoRoute(path: '/groups/:categoryId', builder: (_, state) {
+            final categoryId = state.pathParameters['categoryId']!;
+            return GroupsPage(categoryId: categoryId);
+          }),
+          GoRoute(path: '/notes/:groupId', builder: (_, state) {
+            return NotesPage(
+              groupId: state.pathParameters['groupId']!,
+              noteId: state.uri.queryParameters['note'],
+            );
+          }),
           GoRoute(
             path: '/login',
             builder: (_, _) =>  LoginPage(),

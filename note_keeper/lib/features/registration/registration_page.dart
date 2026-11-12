@@ -56,10 +56,6 @@ class RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     _scaffoldMessenger = ScaffoldMessenger.of(context);
-    var screenSize = MediaQuery.of(context).size;
-
-    var boxW = screenSize.width;
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -69,9 +65,9 @@ class RegistrationPageState extends State<RegistrationPage> {
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
 
-              child: ConstrainedBox(
+              child: Center(child: ConstrainedBox(
                 // Constrain the width, but let the height adapt dynamically to the children
-                constraints: BoxConstraints(maxWidth: boxW),
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -201,8 +197,10 @@ class RegistrationPageState extends State<RegistrationPage> {
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 16,
+                          runSpacing: 8,
                           children: [
 
                             // register button
@@ -227,6 +225,7 @@ class RegistrationPageState extends State<RegistrationPage> {
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ),
