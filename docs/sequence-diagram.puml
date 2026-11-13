@@ -1,0 +1,116 @@
+@startuml
+title Note Keeper - Local First / E2E Sync
+
+actor User
+
+participant "Flutter App\nDevice A" as AppA
+participant "Auth / Key Manager" as KeyA
+database "SQLite\nDevice A" as DbA
+participant "CRDT / Sync Engine\nDevice A" as SyncA
+participant "Encryption Service\nDevice A" as EncA
+participant "Cloud Storage\nGoogle Drive / WebDAV" as Cloud
+participant "CRDT / Sync Engine\nDevice B" as SyncB
+participant "Encryption Service\nDevice B" as EncB
+database "SQLite\nDevice B" as DbB
+participant "Flutter App\nDevice B" as AppB
+
+== First Device ==
+
+User -> AppA: First application start
+AppA -> KeyA: Generate Master Key
+KeyA -> KeyA: Generate 256-bit random key
+KeyA -> KeyA: Derive KEK from password\n(Argon2id)
+KeyA -> KeyA: Encrypt Master Key\n(AES-256-GCM)
+KeyA --> AppA: Master Key
+
+AppA -> DbA: Create local database
+
+== Create / Modify Note ==
+
+User -> AppA: Create / modify note
+AppA -> DbA: INSERT / UPDATE note
+
+AppA -> SyncA: Register change
+SyncA -> SyncA: Create ChangeSet
+
+SyncA -> EncA: Encrypt ChangeSet
+EncA -> EncA: AES-256-GCM
+EncA --> SyncA: Encrypted ChangeSet
+
+SyncA -> Cloud: Upload encrypted ChangeSet
+Cloud --> SyncA: Upload confirmed
+
+== Offline ==
+
+User -> AppA: Modify note while offline
+AppA -> DbA: UPDATE note
+AppA -> SyncA: Register change
+SyncA -> SyncA: Create ChangeSet
+SyncA -> EncA: Encrypt ChangeSet
+EncA --> SyncA: Encrypted ChangeSet
+
+note right of SyncA
+Changes remain locally
+until connectivity is restored
+end note
+
+== Second Device ==
+
+User -> AppB: Install / open application
+AppB -> KeyA: Request account recovery
+User -> KeyA: Enter password
+
+KeyA -> KeyA: Argon2id(password)
+KeyA -> KeyA: Derive KEK
+KeyA -> Cloud: Download encrypted Master Key
+Cloud --> KeyA: Encrypted Master Key
+
+KeyA -> KeyA: Decrypt Master Key
+KeyA --> AppB: Master Key
+
+AppB -> DbB: Create local database
+
+== Initial Synchronization ==
+
+AppB -> Cloud: Request encrypted changes
+Cloud --> AppB: Encrypted ChangeSets
+
+AppB -> EncB: Decrypt ChangeSets
+EncB -> EncB: AES-256-GCM
+EncB --> SyncB: Plain ChangeSets
+
+SyncB -> SyncB: Merge changes\n(CRDT)
+
+SyncB -> DbB: Apply merged changes
+DbB --> AppB: Updated local database
+
+AppB -> AppB: Display synchronized notes
+
+== Modification on Device B ==
+
+User -> AppB: Modify note
+AppB -> DbB: UPDATE note
+
+AppB -> SyncB: Register change
+SyncB -> SyncB: Create ChangeSet
+SyncB -> EncB: Encrypt ChangeSet
+EncB --> SyncB: Encrypted ChangeSet
+
+SyncB -> Cloud: Upload encrypted ChangeSet
+Cloud --> SyncB: Upload confirmed
+
+== Device A Synchronization ==
+
+AppA -> Cloud: Request new changes
+Cloud --> AppA: Encrypted ChangeSets
+
+AppA -> EncA: Decrypt ChangeSets
+EncA --> SyncA: Plain ChangeSets
+
+SyncA -> SyncA: Merge changes\n(CRDT)
+SyncA -> DbA: Apply merged changes
+
+DbA --> AppA: Updated notes
+AppA -> AppA: Refresh UI
+
+@enduml
