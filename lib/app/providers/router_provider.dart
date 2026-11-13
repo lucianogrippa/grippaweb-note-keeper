@@ -1,0 +1,106 @@
+import 'package:go_router/go_router.dart';
+import 'package:note_keeper/app/domain/auth_state.dart';
+import 'package:note_keeper/app/notifiers/auth_notifier.dart';
+import 'package:note_keeper/app/notifiers/loading_notifier.dart';
+import 'package:note_keeper/app/providers/app_provider.dart';
+import 'package:note_keeper/app/services/account_service.dart';
+import 'package:note_keeper/app/services/storage_service.dart';
+import 'package:note_keeper/features/common/loading_overlay.dart';
+import 'package:note_keeper/features/home/groups_page.dart';
+import 'package:note_keeper/features/home/home_page.dart';
+import 'package:note_keeper/features/home/notes_page.dart';
+import 'package:note_keeper/features/login/login_page.dart';
+import 'package:note_keeper/features/registration/registration_page.dart';
+
+
+final Map<String, bool> routesAuthList = {
+  "/login": false, // no need protection by session
+  "/login-error": false,
+  '/home': true,
+  '/groups': true,
+  '/notes': true,
+};
+
+/// define route for entire application
+GoRouter routerProvider() {
+  final notifier = locator<AuthNotifier>();
+
+  final storageService = locator<IStorageService>();
+  final accountService = locator<IAccountService>();
+  final loadingNotifier = locator<LoadingNotifier>();
+
+  return GoRouter(
+    initialLocation: '/home',
+    refreshListenable: notifier,
+    redirect: (context, state) async {
+
+      loadingNotifier.show();
+
+      if(!await storageService.isMasterPasswordExists()) {
+        loadingNotifier.hide();
+        // go to registration page if master password is not set
+        return '/registration';
+      }
+
+      final isAccountExists = await accountService.isAccountExists();
+
+      if(!isAccountExists && state.matchedLocation != '/registration') {
+        loadingNotifier.hide();
+        return '/registration';
+      }
+
+      // before switch route check if the application is authenticated
+      final authState = await accountService.checkSessionFromStoredToken();
+
+      final loggedIn = authState.status == AuthStatus.authenticated;
+
+      final routeToRedirect = routesAuthList.entries.firstWhere((entry) =>
+          state.matchedLocation.contains(entry.key),
+          orElse: () => MapEntry("-1", false));
+
+      final needAuth = routeToRedirect.value;
+
+
+      if (needAuth && !loggedIn) {
+
+        loadingNotifier.hide();
+        return '/login';
+      }
+
+
+      loadingNotifier.hide();
+      return null;
+    },
+    routes: [
+      ShellRoute(
+        builder: (context, state, child) {
+          return LoadingOverlay(
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (_, _) =>  HomePage(),
+          ),
+          GoRoute(path: '/groups/:categoryId', builder: (_, state) {
+            final categoryId = state.pathParameters['categoryId']!;
+            return GroupsPage(categoryId: categoryId);
+          }),
+          GoRoute(path: '/notes/:groupId', builder: (_, state) {
+            return NotesPage(
+              groupId: state.pathParameters['groupId']!,
+              noteId: state.uri.queryParameters['note'],
+            );
+          }),
+          GoRoute(
+            path: '/login',
+            builder: (_, _) =>  LoginPage(),
+          ),
+          GoRoute(
+              path: '/registration',
+              builder: (_, _) => RegistrationPage())
+        ]),
+    ],
+  );
+}
