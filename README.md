@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # note_keeper
 
 
@@ -12,6 +13,14 @@ Use the palette button in the app bar to choose **System**, **Light**, or
 the device and restored the next time the app opens.
 =======
 # grippaweb-password-keeper
+=======
+# Note and Secret Keeper
+
+This project was thought as maintaining a secure place for your password and notes.
+The application works completely offline  without communicating with any servers. All data are store in secure storage in client machine. The local db is encrypted with master password generating the first time you access to the application. 
+
+It organize the notes in category and groups.  leave the users to encryption of content.
+>>>>>>> d97386e (Update README.md)
 
 
 
