@@ -1,9 +1,9 @@
 # Note and Secret Keeper
 
 This project was thought as maintaining a secure place for your password and notes.
-The application works completely offline  without communicating with any servers. All data are store in secure storage in client machine. The local db is encrypted with master password generating the first time you access to the application. 
-
-It organize the notes in category and groups.  leave the users to encryption of content.
+The application works completely offline  without communicating with any servers. All data are store in secure storage in the client machine. The local db is encrypted with master password generating the first time when you access to the application. 
+The account requested when you access is used locally only for encrypting notes content and  protect the application from unwanted access.
+The application organize the notes in Categoris and Groups.
 
 
 
