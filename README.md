@@ -4,6 +4,7 @@ Note Keeper is an offline app for organizing notes and securely storing sensitiv
 
 Organize your notes into categories and groups, and protect access to the app with a local account.
 
+Note Keeper is an offline app for organizing notes and securely storing sensitive information, such as passwords. Your data stays on your device and is not sent to a server or cloud service. The local database is encrypted, and a master key is generated on first launch and stored using the platform's secure storage.
 
 ### Supported platforms
 
