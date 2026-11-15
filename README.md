@@ -4,9 +4,10 @@
 
 ## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The qesy way to start is download the binaaary from latest release.
+The applicaation i built for Windows, Linux, Android.
+in the future It is my intention to publish the application on android store.
+You can also download the source code and compile to any platform you pqefer
 
 ## Add your files
 
