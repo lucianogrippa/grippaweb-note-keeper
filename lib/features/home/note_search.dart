@@ -59,7 +59,7 @@ class _SearchResult {
 
 class _NoteSearchDelegate extends SearchDelegate<_SearchResult?> {
   _NoteSearchDelegate({this.categoryId, this.groupId})
-    : super(searchFieldLabel: 'Search note titles');
+    : super(searchFieldLabel: 'Search titles and descriptions');
 
   final String? categoryId;
   final String? groupId;
@@ -127,7 +127,9 @@ class _NoteSearchDelegate extends SearchDelegate<_SearchResult?> {
   Widget _buildMatches() {
     final text = query.trim();
     if (text.isEmpty) {
-      return const Center(child: Text('Enter a note title to search.'));
+      return const Center(
+        child: Text('Enter a note title or description to search.'),
+      );
     }
     return FutureBuilder<List<_SearchResult>>(
       future: _search(text),

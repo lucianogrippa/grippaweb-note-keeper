@@ -97,12 +97,13 @@ void main() {
           ..name = name,
       );
     }
-    for (final (group, title, content, encrypted) in [
-      ('0', 'Alpha match', 'first', true),
-      ('1', 'Beta match', 'second', false),
-      ('2', 'Gamma match', 'third', false),
-      ('3', 'Other match', 'private', false),
-      ('0', 'Different', 'match', false),
+    for (final (group, title, content, encrypted, description) in [
+      ('0', 'Alpha match', 'first', true, ''),
+      ('1', 'Beta match', 'second', false, ''),
+      ('2', 'Gamma match', 'third', false, ''),
+      ('3', 'Other match', 'private', false, ''),
+      ('0', 'Different', 'match', false, ''),
+      ('0', 'Descriptive note', 'unrelated', false, 'Searchable detail'),
     ]) {
       await notes.createNote(
         Notes()
@@ -110,6 +111,7 @@ void main() {
           ..groupsId = group
           ..title = title
           ..content = content
+          ..description = description
           ..isEncrypted = encrypted,
       );
     }
@@ -181,6 +183,11 @@ void main() {
     expect(find.text('Other match'), findsNothing);
     expect(find.text('Different'), findsNothing);
     expect(find.text('Work / First'), findsOneWidget);
+    await tester.tap(find.byTooltip('Clear search'));
+    await tester.enterText(find.byType(TextField), 'searchable DETAIL');
+    await tester.pumpAndSettle();
+    expect(find.text('Descriptive note'), findsOneWidget);
+    expect(find.text('Alpha match'), findsNothing);
     await tester.tap(find.byTooltip('Close search'));
     await tester.pumpAndSettle();
 
@@ -224,13 +231,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Search notes'));
     await tester.pumpAndSettle();
-    expect(find.text('Enter a note title to search.'), findsOneWidget);
+    expect(
+      find.text('Enter a note title or description to search.'),
+      findsOneWidget,
+    );
     await tester.enterText(find.byType(TextField), 'first');
     await tester.pumpAndSettle();
     expect(find.text('No notes match your search.'), findsOneWidget);
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pumpAndSettle();
-    expect(find.text('Enter a note title to search.'), findsOneWidget);
+    expect(
+      find.text('Enter a note title or description to search.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('real pages use their own scope and reopen a result', (

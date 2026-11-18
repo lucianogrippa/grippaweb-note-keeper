@@ -142,6 +142,7 @@ class _NotesPageState extends State<NotesPage> {
             ..id = note?.id ?? ''
             ..groupsId = groupId
             ..title = result.title
+            ..description = result.description
             ..content = result.content
             ..isEncrypted = result.encrypted;
           final saved = note == null
@@ -274,6 +275,13 @@ class _NotesPageState extends State<NotesPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            subtitle: note.description?.isNotEmpty == true
+                                ? Text(
+                                    note.description!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : null,
                             trailing: note.isEncrypted
                                 ? const Icon(Icons.lock_outline)
                                 : null,
@@ -378,7 +386,21 @@ class _NoteViewerState extends State<_NoteViewer> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.note.title),
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.note.title),
+        if (widget.note.description?.isNotEmpty == true)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              widget.note.description!,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+      ],
+    ),
     content: SizedBox(
       width: 500,
       child: SingleChildScrollView(
@@ -485,11 +507,13 @@ class _CopyNoteMenu extends StatelessWidget {
 class _NoteDraft {
   const _NoteDraft(
     this.title,
+    this.description,
     this.content,
     this.encrypted,
     this.preserveEncryptedContent,
   );
   final String title;
+  final String description;
   final String content;
   final bool encrypted;
   final bool preserveEncryptedContent;
@@ -512,6 +536,9 @@ class _NoteEditor extends StatefulWidget {
 class _NoteEditorState extends State<_NoteEditor> {
   final _form = GlobalKey<FormState>();
   late final _title = TextEditingController(text: widget.note?.title ?? '');
+  late final _description = TextEditingController(
+    text: widget.note?.description ?? '',
+  );
   late final _content = TextEditingController(
     text: widget.note?.isEncrypted == true ? '' : widget.note?.content ?? '',
   );
@@ -529,7 +556,13 @@ class _NoteEditorState extends State<_NoteEditor> {
     });
     try {
       await widget.save(
-        _NoteDraft(_title.text.trim(), _content.text, _encrypted, !_unlocked),
+        _NoteDraft(
+          _title.text.trim(),
+          _description.text.trim(),
+          _content.text,
+          _encrypted,
+          !_unlocked,
+        ),
       );
       if (mounted) {
         setState(() => _loading = false);
@@ -582,6 +615,7 @@ class _NoteEditorState extends State<_NoteEditor> {
   @override
   void dispose() {
     _title.dispose();
+    _description.dispose();
     _content.dispose();
     super.dispose();
   }
@@ -603,6 +637,13 @@ class _NoteEditorState extends State<_NoteEditor> {
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Title is required'
                     : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _description,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLength: 255,
+                maxLines: 3,
               ),
               const SizedBox(height: 16),
               if (_visible)

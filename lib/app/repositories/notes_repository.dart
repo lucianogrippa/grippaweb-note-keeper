@@ -47,6 +47,7 @@ class NoteRepository extends BaseRepository<Notes> implements INoteRepository {
     ..id = note.id
     ..groupsId = note.groupsId
     ..title = note.title
+    ..description = note.description ?? ''
     ..content = content ?? note.content
     ..isEncrypted = note.isEncrypted
     ..createdAt = note.createdAt
@@ -81,7 +82,10 @@ class NoteRepository extends BaseRepository<Notes> implements INoteRepository {
         .where((note) {
           if (note.groupsId != groupId) return false;
           return (titleQuery.isNotEmpty &&
-                  note.title.toLowerCase().contains(titleQuery)) ||
+                  (note.title.toLowerCase().contains(titleQuery) ||
+                      (note.description ?? '').toLowerCase().contains(
+                        titleQuery,
+                      ))) ||
               (contentQuery.isNotEmpty &&
                   !note.isEncrypted &&
                   note.content.toLowerCase().contains(contentQuery)) ||
@@ -120,6 +124,7 @@ class NoteRepository extends BaseRepository<Notes> implements INoteRepository {
       ..groupsId = note.groupsId
       ..title = note.title
       ..content = content
+      ..description = note.description ?? ''
       ..isEncrypted = note.isEncrypted
       ..createdAt = now
       ..updatedAt = now;
@@ -160,6 +165,7 @@ class NoteRepository extends BaseRepository<Notes> implements INoteRepository {
       ..groupsId = existing.groupsId
       ..title = note.title
       ..content = content
+      ..description = note.description ?? ''
       ..isEncrypted = note.isEncrypted
       ..createdAt = existing.createdAt
       ..updatedAt = DateTime.now();

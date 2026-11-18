@@ -90,6 +90,16 @@ void main() {
         find.widgetWithText(TextFormField, 'Title'),
         'Secret',
       );
+      final descriptionField = find.widgetWithText(
+        TextFormField,
+        'Description',
+      );
+      await tester.enterText(descriptionField, 'x' * 256);
+      expect(
+        tester.widget<TextFormField>(descriptionField).controller!.text.length,
+        255,
+      );
+      await tester.enterText(descriptionField, 'A private note');
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Content'),
         'private value',
@@ -98,12 +108,20 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(find.text('Secret'), findsOneWidget);
+      expect(find.text('A private note'), findsOneWidget);
       expect(find.text('private value'), findsNothing);
       expect(box.entries.values.single.content, isNot('private value'));
       final ciphertext = box.entries.values.single.content;
 
       await tester.tap(find.text('Secret'));
       await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('A private note'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('private value'), findsNothing);
       await tester.tap(
         find.descendant(
@@ -132,10 +150,15 @@ void main() {
         find.widgetWithText(TextFormField, 'Title'),
         'Renamed',
       );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Description'),
+        'Updated description',
+      );
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(box.entries.values.single.content, ciphertext);
       expect(find.text('Renamed'), findsOneWidget);
+      expect(find.text('Updated description'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Edit note'));
       await tester.pumpAndSettle();

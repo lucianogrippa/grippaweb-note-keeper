@@ -96,6 +96,15 @@ void main() {
         )).single.content,
         '***',
       );
+      created.description = 'Private details';
+      await repository.updateNote(created, preserveEncryptedContent: true);
+      final descriptionMatches = await repository.searchWithTitleOrContent(
+        'group',
+        'DETAILS',
+        '',
+      );
+      expect(descriptionMatches.single.description, 'Private details');
+      expect(descriptionMatches.single.content, '***');
       expect(await repository.revealContent(created.id), 'private');
       expect(box.entries[created.id]!.content, ciphertext);
       expect(

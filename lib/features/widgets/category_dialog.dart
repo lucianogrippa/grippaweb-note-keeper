@@ -53,7 +53,7 @@ class NoteCategoryDialog extends StatelessWidget {
               ..name = nameController.text.trim()
               ..description = descriptionController.text.trim();
             onSubmit(newCategory);
-            Navigator.of(context).pop();
+            
           },
           child: const Text('Save'),
         ),

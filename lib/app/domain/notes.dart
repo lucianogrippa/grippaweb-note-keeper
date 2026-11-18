@@ -5,6 +5,7 @@ class Notes {
   late String groupsId;
   late String title;
   late String content;
+  String? description = '';
   late bool isEncrypted;
   late DateTime createdAt;
   late DateTime updatedAt;
@@ -24,6 +25,7 @@ class NotesAdapter extends TypeAdapter<Notes> {
     note.isEncrypted = reader.readBool();
     note.createdAt = DateTime.parse(reader.readString());
     note.updatedAt = DateTime.parse(reader.readString());
+    note.description = reader.readString();
     return note;
   }
 
@@ -36,5 +38,6 @@ class NotesAdapter extends TypeAdapter<Notes> {
     writer.writeBool(obj.isEncrypted);
     writer.writeString(obj.createdAt.toIso8601String());
     writer.writeString(obj.updatedAt.toIso8601String());
+    writer.writeString(obj.description ?? '');
   }
 }

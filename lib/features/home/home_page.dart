@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:note_keeper/app/domain/categories.dart';
@@ -160,7 +162,7 @@ class _HomePageState extends State<HomePage> {
               if(!context.mounted) return;
               await _confirmAddCategory(context, categoryItem.name, categoryItem.description);
               loadNotifier.hide();
-              Navigator.of(context).pop(true);
+            
             });
 
           },
