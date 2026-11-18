@@ -37,7 +37,7 @@ abstract class IAccountService {
 
 class AccountService implements IAccountService {
 
-  static final _maxTokenDurationInSecs = 30;
+  static final _maxTokenDurationInDays = 30;
   final IStorageService _storageService;
   final IAccountRepository _accountRepository;
 
@@ -69,7 +69,7 @@ class AccountService implements IAccountService {
       }
 
       DateTime expireDate = DateTime.now().add(
-          Duration(days: _maxTokenDurationInSecs));
+          Duration(days: _maxTokenDurationInDays));
 
 
       account.expireDate = expireDate;
